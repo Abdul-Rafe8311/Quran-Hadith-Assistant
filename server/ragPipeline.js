@@ -1,6 +1,8 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 const { createClient } = require('@supabase/supabase-js');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Anthropic = require('@anthropic-ai/sdk');
 const { pipeline } = require('@xenova/transformers');
 
 const supabase = createClient(
@@ -8,7 +10,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 let embedder = null;
 
@@ -91,7 +93,7 @@ async function runRAG(question, language) {
   const queryEmbedding = await embedText(question);
 
   // Search knowledge base
-  const sources = await searchKnowledge(queryEmbedding, 5);
+  const sources = await searchKnowledge(queryEmbedding, 10);
 
   if (sources.length === 0) {
     return {
@@ -134,10 +136,13 @@ ${context}
 
 User question: ${question}`;
 
-  // Call Gemini
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-  const result = await model.generateContent(prompt);
-  const answer = result.response.text();
+  // Call Claude
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  const answer = message.content[0].text;
 
   const { quran_sources, hadith_sources } = parseAnswer(answer, sources);
 
