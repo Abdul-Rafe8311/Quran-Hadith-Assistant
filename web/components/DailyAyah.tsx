@@ -44,7 +44,7 @@ export default function DailyAyah() {
         <div className="w-1 h-5 rounded-full bg-[#c9a84c]" />
         <span className="text-xs font-bold text-[#c9a84c] uppercase tracking-widest">Daily Ayah</span>
       </div>
-      {meta.arabic_text && (
+      {meta.arabic_text != null && (
         <p className="arabic text-2xl text-[#0d3d25] mb-4 leading-loose bg-[#0d3d25]/5 rounded-xl p-3">
           {String(meta.arabic_text)}
         </p>

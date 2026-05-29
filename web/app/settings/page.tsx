@@ -52,7 +52,7 @@ export default function SettingsPage() {
   function clearSaved() {
     if (!confirm('This will delete all saved answers.')) return;
     localStorage.removeItem('saved_answers');
-    supabase.from('saved_answers').delete().neq('id', '').catch(() => {});
+    void supabase.from('saved_answers').delete().neq('id', '');
     alert('Saved answers cleared.');
   }
 
