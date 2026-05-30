@@ -20,12 +20,13 @@ app.use('/api/ask', limiter);
 
 app.post('/api/ask', async (req, res) => {
   try {
-    const { question, language } = req.body;
+    const { question, language, responseSize } = req.body;
     if (!question || typeof question !== 'string' || question.trim().length === 0) {
       return res.status(400).json({ error: 'Question is required.' });
     }
-    console.log(`[${new Date().toISOString()}] Question: ${question.substring(0, 80)}`);
-    const result = await runRAG(question.trim(), language);
+    const size = ['small', 'medium', 'large'].includes(responseSize) ? responseSize : 'medium';
+    console.log(`[${new Date().toISOString()}] Question (${size}): ${question.substring(0, 80)}`);
+    const result = await runRAG(question.trim(), language, size);
     res.json(result);
   } catch (err) {
     console.error('RAG error:', err);

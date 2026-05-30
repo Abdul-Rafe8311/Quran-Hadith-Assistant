@@ -3,13 +3,14 @@ import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AnswerBubble from '../../components/AnswerBubble';
 import SkeletonLoader from '../../components/SkeletonLoader';
-import { askQuestion, detectLanguage, GeminiResponse } from '../../lib/api';
+import { askQuestion, detectLanguage, GeminiResponse, ResponseSize } from '../../lib/api';
 
 interface Message {
   id: string;
   type: 'user' | 'answer' | 'error';
   text?: string;
   response?: GeminiResponse;
+  size?: ResponseSize;
 }
 
 const QUICK_QUESTIONS = [
@@ -19,6 +20,27 @@ const QUICK_QUESTIONS = [
   'What is Zakat?',
 ];
 
+const SIZE_OPTIONS: { value: ResponseSize; label: string; description: string; icon: string }[] = [
+  {
+    value: 'small',
+    label: 'Quick',
+    description: 'Short & direct — 2-4 sentences',
+    icon: '⚡',
+  },
+  {
+    value: 'medium',
+    label: 'Normal',
+    description: 'Balanced answer with evidence',
+    icon: '📖',
+  },
+  {
+    value: 'large',
+    label: 'Detailed',
+    description: 'Full explanation with Tafsir',
+    icon: '🔍',
+  },
+];
+
 function ChatContent() {
   const searchParams = useSearchParams();
   const prefill = searchParams.get('prefill') || '';
@@ -26,6 +48,7 @@ function ChatContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState(prefill);
   const [loading, setLoading] = useState(false);
+  const [responseSize, setResponseSize] = useState<ResponseSize>('medium');
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -34,13 +57,19 @@ function ChatContent() {
     if (stored) {
       try { setMessages(JSON.parse(stored).slice(0, 40)); } catch {}
     }
+    const settings = localStorage.getItem('settings');
+    if (settings) {
+      try {
+        const s = JSON.parse(settings);
+        if (s.responseSize) setResponseSize(s.responseSize);
+      } catch {}
+    }
   }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Auto-resize textarea
   useEffect(() => {
     const ta = textareaRef.current;
     if (ta) {
@@ -53,7 +82,7 @@ function ChatContent() {
     const q = input.trim();
     if (!q || loading) return;
 
-    const userMsg: Message = { id: Date.now().toString(), type: 'user', text: q };
+    const userMsg: Message = { id: Date.now().toString(), type: 'user', text: q, size: responseSize };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput('');
@@ -61,8 +90,8 @@ function ChatContent() {
 
     try {
       const lang = detectLanguage(q);
-      const response = await askQuestion(q, lang);
-      const answerMsg: Message = { id: (Date.now() + 1).toString(), type: 'answer', response };
+      const response = await askQuestion(q, lang, responseSize);
+      const answerMsg: Message = { id: (Date.now() + 1).toString(), type: 'answer', response, size: responseSize };
       const updated = [...newMessages, answerMsg];
       setMessages(updated);
       localStorage.setItem('chat_history', JSON.stringify(updated.slice(0, 40)));
@@ -81,7 +110,7 @@ function ChatContent() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages]);
+  }, [input, loading, messages, responseSize]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -90,13 +119,15 @@ function ChatContent() {
     }
   }
 
+  const activeSizeOption = SIZE_OPTIONS.find(o => o.value === responseSize)!;
+
   return (
     <div className="flex flex-col h-[calc(100vh-52px)] max-w-3xl mx-auto w-full">
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto py-5 space-y-1">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
-            {/* Animated icon */}
+            {/* Icon */}
             <div className="relative mb-6">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#0d3d25] to-[#1a5c38] flex items-center justify-center shadow-xl shadow-[#0d3d25]/30">
                 <svg viewBox="0 0 40 40" width="32" height="32" fill="none">
@@ -105,13 +136,13 @@ function ChatContent() {
                   <path d="M23 16 L26 13 L34 21 L26 29 L23 26 L28 21 Z" fill="#c9a84c" opacity="0.4"/>
                 </svg>
               </div>
-              {/* Decorative ring */}
               <div className="absolute inset-0 rounded-full border-2 border-[#c9a84c]/20 animate-ping" style={{ animationDuration: '3s' }} />
             </div>
 
             <p className="arabic text-4xl text-[#1a5c38] mb-3 leading-loose">سبحان الله</p>
-            <p className="text-gray-700 font-semibold text-base mb-1.5">Ask about the Quran or Hadith</p>
-            <p className="text-gray-400 text-sm mb-7">in English or <span className="font-medium">اردو میں</span></p>
+            <p className="text-gray-700 font-semibold text-base mb-1">Got a question about Islam?</p>
+            <p className="text-gray-400 text-sm mb-2">Ask anything — in English or <span className="font-medium">اردو میں</span></p>
+            <p className="text-xs text-[#1a5c38]/60 mb-7">Answers from Quran & authentic Hadith, explained simply</p>
 
             {/* Quick question chips */}
             <div className="flex flex-wrap justify-center gap-2 max-w-md">
@@ -130,10 +161,18 @@ function ChatContent() {
 
         {messages.map(msg => {
           if (msg.type === 'user') {
+            const sizeOpt = SIZE_OPTIONS.find(o => o.value === msg.size);
             return (
               <div key={msg.id} className="flex justify-end px-4 py-1.5 fade-in">
-                <div className="bg-gradient-to-br from-[#1a5c38] to-[#0d3d25] text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-xs sm:max-w-md text-sm leading-relaxed shadow-md shadow-[#0d3d25]/20">
-                  {msg.text}
+                <div className="flex flex-col items-end gap-1">
+                  {sizeOpt && (
+                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                      {sizeOpt.icon} {sizeOpt.label} response
+                    </span>
+                  )}
+                  <div className="bg-gradient-to-br from-[#1a5c38] to-[#0d3d25] text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-xs sm:max-w-md text-sm leading-relaxed shadow-md shadow-[#0d3d25]/20">
+                    {msg.text}
+                  </div>
                 </div>
               </div>
             );
@@ -171,12 +210,40 @@ function ChatContent() {
       </div>
 
       {/* Input bar */}
-      <div className="border-t border-[#c9a84c]/15 bg-white/90 backdrop-blur-md px-4 py-3">
-        <div className="flex gap-2.5 items-end max-w-3xl mx-auto">
+      <div className="border-t border-[#c9a84c]/15 bg-white/95 backdrop-blur-md">
+        {/* Response size selector */}
+        <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">Response size:</span>
+          {SIZE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                setResponseSize(opt.value);
+                try {
+                  const s = JSON.parse(localStorage.getItem('settings') || '{}');
+                  localStorage.setItem('settings', JSON.stringify({ ...s, responseSize: opt.value }));
+                } catch {}
+              }}
+              title={opt.description}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${
+                responseSize === opt.value
+                  ? 'bg-[#0d3d25] text-white border-[#0d3d25] shadow-sm'
+                  : 'text-gray-500 border-gray-200 hover:border-[#c9a84c]/50 hover:bg-[#fdf6e3]/60'
+              }`}
+            >
+              <span>{opt.icon}</span>
+              {opt.label}
+            </button>
+          ))}
+          <span className="ml-auto text-[10px] text-gray-400 hidden sm:block">{activeSizeOption.description}</span>
+        </div>
+
+        {/* Text input */}
+        <div className="flex gap-2.5 items-end px-4 pb-3">
           <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
-              className="w-full border border-[#c9a84c]/25 rounded-2xl px-4 py-3 pr-14 text-sm resize-none focus:outline-none focus:border-[#1a5c38]/60 focus:ring-2 focus:ring-[#1a5c38]/10 bg-[#fdf6e3]/50 max-h-32 placeholder-gray-400 transition-all duration-200 shadow-sm"
+              className="w-full border border-[#c9a84c]/25 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#1a5c38]/60 focus:ring-2 focus:ring-[#1a5c38]/10 bg-[#fdf6e3]/50 max-h-32 placeholder-gray-400 transition-all duration-200 shadow-sm"
               rows={1}
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -201,7 +268,7 @@ function ChatContent() {
             }
           </button>
         </div>
-        <p className="text-center text-[10px] text-gray-400 mt-2">Enter to send · Shift+Enter for new line</p>
+        <p className="text-center text-[10px] text-gray-400 pb-2">Enter to send · Shift+Enter for new line</p>
       </div>
     </div>
   );
