@@ -16,14 +16,13 @@ function containsArabic(text: string) {
 /** Remove PDF artifacts: URLs, garbled OCR lines, excessive special chars */
 function cleanText(raw: string): string {
   return raw
-    .replace(/https?:\/\/[^\s]+/g, '')           // strip URLs
-    .replace(/www\.[^\s]+/g, '')                  // strip www. links
-    .replace(/[{}_\\|<>]{2,}/g, '')               // strip PDF artifact runs
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/www\.[^\s]+/g, '')
+    .replace(/[{}_\\|<>]{2,}/g, '')
     .split('\n')
     .filter(line => {
       const t = line.trim();
       if (!t) return true;
-      // keep line only if at least 30% of chars are letters (Latin or Arabic)
       const letters = (t.match(/[a-zA-Z؀-ۿ]/g) || []).length;
       return letters / t.length > 0.28;
     })
@@ -32,67 +31,151 @@ function cleanText(raw: string): string {
     .trim();
 }
 
+const SURAH_NAMES: Record<number, string> = {
+  1:'Al-Fatihah',2:'Al-Baqarah',3:'Al-Imran',4:'An-Nisa',5:'Al-Maidah',
+  6:'Al-Anam',7:'Al-Araf',8:'Al-Anfal',9:'At-Tawbah',10:'Yunus',
+  11:'Hud',12:'Yusuf',13:'Ar-Rad',14:'Ibrahim',15:'Al-Hijr',
+  16:'An-Nahl',17:'Al-Isra',18:'Al-Kahf',19:'Maryam',20:'Ta-Ha',
+  21:'Al-Anbiya',22:'Al-Hajj',23:'Al-Muminun',24:'An-Nur',25:'Al-Furqan',
+  26:'Ash-Shuara',27:'An-Naml',28:'Al-Qasas',29:'Al-Ankabut',30:'Ar-Rum',
+  31:'Luqman',32:'As-Sajdah',33:'Al-Ahzab',34:'Saba',35:'Fatir',
+  36:'Ya-Sin',37:'As-Saffat',38:'Sad',39:'Az-Zumar',40:'Ghafir',
+  41:'Fussilat',42:'Ash-Shura',43:'Az-Zukhruf',44:'Ad-Dukhan',45:'Al-Jathiyah',
+  46:'Al-Ahqaf',47:'Muhammad',48:'Al-Fath',49:'Al-Hujurat',50:'Qaf',
+  51:'Adh-Dhariyat',52:'At-Tur',53:'An-Najm',54:'Al-Qamar',55:'Ar-Rahman',
+  56:'Al-Waqiah',57:'Al-Hadid',58:'Al-Mujadila',59:'Al-Hashr',60:'Al-Mumtahanah',
+  61:'As-Saf',62:'Al-Jumuah',63:'Al-Munafiqun',64:'At-Taghabun',65:'At-Talaq',
+  66:'At-Tahrim',67:'Al-Mulk',68:'Al-Qalam',69:'Al-Haqqah',70:'Al-Maarij',
+  71:'Nuh',72:'Al-Jinn',73:'Al-Muzzammil',74:'Al-Muddaththir',75:'Al-Qiyamah',
+  76:'Al-Insan',77:'Al-Mursalat',78:'An-Naba',79:'An-Naziat',80:'Abasa',
+  81:'At-Takwir',82:'Al-Infitar',83:'Al-Mutaffifin',84:'Al-Inshiqaq',85:'Al-Buruj',
+  86:'At-Tariq',87:'Al-Ala',88:'Al-Ghashiyah',89:'Al-Fajr',90:'Al-Balad',
+  91:'Ash-Shams',92:'Al-Layl',93:'Ad-Duha',94:'Ash-Sharh',95:'At-Tin',
+  96:'Al-Alaq',97:'Al-Qadr',98:'Al-Bayyinah',99:'Az-Zalzalah',100:'Al-Adiyat',
+  101:'Al-Qariah',102:'At-Takathur',103:'Al-Asr',104:'Al-Humazah',105:'Al-Fil',
+  106:'Quraysh',107:'Al-Maun',108:'Al-Kawthar',109:'Al-Kafirun',110:'An-Nasr',
+  111:'Al-Masad',112:'Al-Ikhlas',113:'Al-Falaq',114:'An-Nas',
+};
+
+/** Try to extract surah/verse from text content when DB metadata is missing */
+function parseRefFromText(text: string): { surahNum?: number; verseNum?: number; surahName?: string } {
+  // Pattern: (5:33) or 5:33
+  const colonRef = text.match(/\((\d{1,3}):(\d{1,3})\)/) || text.match(/\b(\d{1,3}):(\d{1,3})\b/);
+  if (colonRef) {
+    const s = parseInt(colonRef[1], 10), v = parseInt(colonRef[2], 10);
+    if (s >= 1 && s <= 114 && v >= 1) return { surahNum: s, verseNum: v, surahName: SURAH_NAMES[s] };
+  }
+  // Pattern: surah name in text
+  for (const [num, name] of Object.entries(SURAH_NAMES)) {
+    if (text.includes(name)) {
+      const n = parseInt(num, 10);
+      // also try to find verse number near the name
+      const vMatch = text.match(new RegExp(name + '[^\\d]*(\\d{1,3})'));
+      return { surahNum: n, verseNum: vMatch ? parseInt(vMatch[1], 10) : undefined, surahName: name };
+    }
+  }
+  // Pattern: standalone verse-like number "35." at start of sentence
+  const verseOnly = text.match(/(?:^|[.;!]\s+)(\d{1,3})\.\s+[A-Z]/m);
+  if (verseOnly) return { verseNum: parseInt(verseOnly[1], 10) };
+  return {};
+}
+
 function QuranCard({ src, index }: { src: QuranSource; index: number }) {
   const [open, setOpen] = useState(false);
 
-  const hasRef = src.surah_name && Number(src.chapter) > 0 && Number(src.verse) > 0;
-  const onlyNumbers = !src.surah_name && Number(src.chapter) > 0 && Number(src.verse) > 0;
-  const label = hasRef
-    ? `Surah ${src.surah_name} — ${src.chapter}:${src.verse}`
-    : onlyNumbers
-      ? `Quran ${src.chapter}:${src.verse}`
-      : 'Quran Verse';
-
   const translation = cleanText(src.text);
+
+  // Build reference — prefer DB metadata, fall back to text extraction
+  const dbChapter = Number(src.chapter);
+  const dbVerse   = Number(src.verse);
+  const dbName    = src.surah_name?.trim();
+
+  const hasDbRef  = dbChapter > 0 && dbVerse > 0;
+  const textRef   = hasDbRef ? {} : parseRefFromText(translation || src.text);
+
+  const surahNum  = hasDbRef ? dbChapter : textRef.surahNum;
+  const verseNum  = hasDbRef ? dbVerse   : textRef.verseNum;
+  const surahName = dbName || textRef.surahName || (surahNum ? SURAH_NAMES[surahNum] : undefined);
+
+  const chipLabel = surahName && surahNum && verseNum
+    ? `Surah ${surahName} (${surahNum}:${verseNum})`
+    : surahName && surahNum
+      ? `Surah ${surahName} (Ch. ${surahNum})`
+      : verseNum
+        ? `Quran — Verse ${verseNum}`
+        : 'Quran Verse';
 
   return (
     <div className="rounded-xl border border-emerald-200/70 overflow-hidden">
+      {/* Collapsed row */}
       <button
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left bg-emerald-50/60 hover:bg-emerald-50 transition-colors"
         onClick={() => setOpen(v => !v)}
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="shrink-0 w-6 h-6 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
-          <div className="min-w-0">
-            <span className="text-xs font-bold text-emerald-800 block truncate">📖 {label}</span>
-          </div>
+          <span className="text-xs font-bold text-emerald-800 truncate">📖 {chipLabel}</span>
         </div>
-        <svg
-          className={`shrink-0 w-4 h-4 text-emerald-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-        >
+        <svg className={`shrink-0 w-4 h-4 text-emerald-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </button>
 
+      {/* Expanded content */}
       {open && (
-        <div className="border-t border-emerald-200/60 bg-white space-y-3 p-4">
-          {/* Arabic text */}
+        <div className="border-t border-emerald-200/60 bg-white divide-y divide-emerald-100/60">
+
+          {/* ── Reference banner ── */}
+          <div className="px-4 py-3 bg-emerald-700 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-widest">Quran Reference</span>
+            </div>
+            <div className="flex flex-wrap gap-2 ml-auto">
+              {surahName && (
+                <span className="bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Surah {surahName}
+                </span>
+              )}
+              {surahNum && (
+                <span className="bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Chapter {surahNum}
+                </span>
+              )}
+              {verseNum && (
+                <span className="bg-[#c9a84c] text-[#0d3d25] text-xs font-bold px-3 py-1 rounded-full">
+                  Ayah (Verse) {verseNum}
+                </span>
+              )}
+              {!surahNum && !verseNum && (
+                <span className="bg-white/10 text-emerald-200 text-xs px-3 py-1 rounded-full italic">
+                  Reference not in stored data
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* ── Arabic text ── */}
           {src.arabic_text && (
-            <div className="relative">
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#c9a84c]/60 via-[#c9a84c] to-[#c9a84c]/60 rounded-full" />
-              <div className="bg-[#fdf6e3] border border-[#c9a84c]/20 rounded-xl p-4 pl-5">
-                <p className="text-[10px] font-bold text-[#c9a84c] uppercase tracking-widest mb-2">Arabic</p>
-                <p className="arabic text-2xl text-[#0d3d25] leading-loose">{src.arabic_text}</p>
+            <div className="p-4">
+              <p className="text-[10px] font-bold text-[#c9a84c] uppercase tracking-widest mb-3">Arabic Text</p>
+              <div className="relative">
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#c9a84c]/60 via-[#c9a84c] to-[#c9a84c]/60 rounded-full" />
+                <p className="arabic text-2xl text-[#0d3d25] leading-loose bg-[#fdf6e3] border border-[#c9a84c]/20 rounded-xl p-4 pl-5">
+                  {src.arabic_text}
+                </p>
               </div>
             </div>
           )}
 
-          {/* Translation */}
+          {/* ── Translation ── */}
           {translation && (
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <div className="p-4">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Translation</p>
               <p className="text-sm text-gray-700 leading-relaxed">{translation}</p>
-            </div>
-          )}
-
-          {/* Reference */}
-          {hasRef && (
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-              Holy Quran, Surah {src.surah_name}, Chapter {src.chapter}, Verse {src.verse}
             </div>
           )}
         </div>
@@ -105,43 +188,61 @@ function HadithCard({ src, index }: { src: HadithSource; index: number }) {
   const [open, setOpen] = useState(false);
 
   const hasNumber = src.number && Number(src.number) > 0;
-  const label = hasNumber ? `${src.book} — Hadith #${src.number}` : src.book || 'Hadith';
+  const chipLabel = hasNumber ? `${src.book} — Hadith #${src.number}` : src.book || 'Hadith';
   const text = cleanText(src.text);
 
   return (
     <div className="rounded-xl border border-amber-200/70 overflow-hidden">
+      {/* Collapsed row */}
       <button
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left bg-amber-50/60 hover:bg-amber-50 transition-colors"
         onClick={() => setOpen(v => !v)}
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="shrink-0 w-6 h-6 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
-          <div className="min-w-0">
-            <span className="text-xs font-bold text-amber-800 block truncate">📜 {label}</span>
-          </div>
+          <span className="text-xs font-bold text-amber-800 truncate">📜 {chipLabel}</span>
         </div>
-        <svg
-          className={`shrink-0 w-4 h-4 text-amber-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-        >
+        <svg className={`shrink-0 w-4 h-4 text-amber-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </button>
 
+      {/* Expanded content */}
       {open && (
-        <div className="border-t border-amber-200/60 bg-white p-4 space-y-3">
-          {/* Hadith text */}
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Hadith Text</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{text || 'Hadith text unavailable.'}</p>
+        <div className="border-t border-amber-200/60 bg-white divide-y divide-amber-100/60">
+
+          {/* ── Reference banner ── */}
+          <div className="px-4 py-3 bg-amber-700 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fde68a" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              <span className="text-[10px] font-bold text-amber-200 uppercase tracking-widest">Hadith Reference</span>
+            </div>
+            <div className="flex flex-wrap gap-2 ml-auto">
+              {src.book && (
+                <span className="bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  {src.book}
+                </span>
+              )}
+              {hasNumber && (
+                <span className="bg-[#c9a84c] text-[#0d3d25] text-xs font-bold px-3 py-1 rounded-full">
+                  Hadith No. {src.number}
+                </span>
+              )}
+              {!hasNumber && (
+                <span className="bg-white/10 text-amber-200 text-xs px-3 py-1 rounded-full italic">
+                  Number not extracted
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Reference */}
-          <div className="flex items-center gap-1.5 text-[11px] text-amber-700 font-semibold">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </svg>
-            {hasNumber ? `${src.book}, Hadith No. ${src.number}` : src.book}
+          {/* ── Hadith text ── */}
+          <div className="p-4">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Hadith Text</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{text || 'Hadith text unavailable.'}</p>
           </div>
         </div>
       )}
