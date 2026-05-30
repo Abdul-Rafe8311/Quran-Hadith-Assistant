@@ -29,6 +29,54 @@ async function embedText(text) {
   return Array.from(output.data);
 }
 
+// Map common transliterated Islamic terms to the English words that actually
+// appear in Quran/Hadith translations — dramatically improves search matching.
+const TERM_GLOSSARY = {
+  tawakkul: 'trust and complete reliance upon Allah',
+  tawakul: 'trust and complete reliance upon Allah',
+  sabr: 'patience perseverance steadfastness in hardship',
+  shukr: 'gratitude thankfulness being thankful to Allah',
+  taqwa: 'God-consciousness piety fear of Allah righteousness',
+  ikhlas: 'sincerity pure intention worshipping Allah alone',
+  tawbah: 'repentance turning back to Allah seeking forgiveness',
+  tawba: 'repentance turning back to Allah seeking forgiveness',
+  rizq: 'provision sustenance livelihood from Allah',
+  zakat: 'obligatory charity giving alms to the poor',
+  sadaqah: 'voluntary charity giving to those in need',
+  salah: 'prayer ritual worship five daily prayers',
+  salat: 'prayer ritual worship five daily prayers',
+  sawm: 'fasting abstaining during Ramadan',
+  hajj: 'pilgrimage to Makkah',
+  jihad: 'striving struggle in the way of Allah',
+  iman: 'faith belief in Allah',
+  ihsan: 'excellence perfection worshipping Allah as if seeing Him',
+  rahmah: 'mercy compassion kindness',
+  adl: 'justice fairness being just',
+  ilm: 'knowledge seeking learning',
+  dua: 'supplication calling upon Allah prayer',
+  dhikr: 'remembrance of Allah glorifying mentioning Allah',
+  nikah: 'marriage wedding marital contract',
+  halal: 'lawful permitted allowed',
+  haram: 'forbidden prohibited unlawful',
+  akhlaq: 'good character manners morals behaviour',
+  ummah: 'community of believers Muslim nation',
+  jannah: 'paradise heaven garden reward',
+  jahannam: 'hellfire punishment',
+  akhirah: 'hereafter afterlife day of judgement',
+};
+
+function expandQuery(question) {
+  const lower = question.toLowerCase();
+  const additions = [];
+  for (const [term, meaning] of Object.entries(TERM_GLOSSARY)) {
+    // match whole word (handles "tawakkul", "tawakul", plurals loosely)
+    if (new RegExp(`\\b${term}\\b`, 'i').test(lower)) {
+      additions.push(meaning);
+    }
+  }
+  return additions.length ? `${question}. ${additions.join('. ')}` : question;
+}
+
 async function searchKnowledge(queryEmbedding, limit = 8) {
   const { data, error } = await supabase.rpc('match_islamic_knowledge', {
     query_embedding: queryEmbedding,
@@ -150,7 +198,12 @@ function parseAnswer(rawAnswer, sources, quranRefs = []) {
   const hadith_sources = sources
     .filter(s => s.source_type === 'hadith')
     .filter(s => {
-      const key = `${s.metadata?.book}#${s.metadata?.hadith_number}`;
+      // Dedup by hadith number when present, otherwise by content —
+      // (numberless hadiths must NOT all collapse into one).
+      const num = s.metadata?.hadith_number;
+      const key = num
+        ? `${s.metadata?.book}#${num}`
+        : `c:${(s.content || '').substring(0, 60).trim()}`;
       if (seenHadith.has(key)) return false;
       seenHadith.add(key);
       return true;
@@ -199,15 +252,16 @@ function buildPrompt(question, context, detectedLang, responseSize) {
 ${sizeInstructions[responseSize]}
 
 Rules you must always follow:
-1. Use ONLY the sources provided below. Never invent information.
-2. Always cite your sources: Quran as (Surah Name Chapter:Verse), Hadith as (Book #Number).
+1. Prefer the sources provided below. If they fully answer the question, rely on them. If they are weak, off-topic, or incomplete, you MAY add famous, widely-documented Quran verses and authentic Hadith that you are confident are correct — but never fabricate a verse, wording, or citation. If unsure of an exact reference, describe the teaching without inventing a fake citation.
+2. Always cite your sources: Quran as (Surah Name Chapter:Verse), Hadith as (Book #Number). Only give a citation you are confident is accurate.
 3. Write in simple, plain English. Short sentences. Everyday words. No jargon — if you must use an Islamic term, immediately explain what it means in brackets.
 4. When quoting a Hadith, FIRST give the full clean English text of what the Prophet ﷺ said or did, THEN explain what it means in 1-2 sentences. Never show garbled or partial text.
 5. When quoting a Quran verse, quote it cleanly then explain what it means in simple words.
 6. Never be judgmental. Teenagers come with honest questions — treat them with respect.
 7. Only say "For a personal fatwa (religious ruling), please ask a qualified scholar" if the question is specifically asking for a legal ruling about a personal situation. For all general knowledge questions, answer fully.
-8. ${langRule}
-9. Format your answer using these section headers (only include sections relevant to your response size):
+8. NEVER refuse to answer or say the sources are not enough. The topic the user asks about is well-established in Islam. Use whatever relevant material is in the sources below, and you MAY also use your own reliable knowledge of famous Quran verses and authentic Hadith on this topic to give a complete, helpful answer. Always give the student a real, useful answer.
+9. ${langRule}
+10. Format your answer using these section headers (only include sections relevant to your response size):
 
 [Direct Answer]
 [Quranic Evidence]
@@ -215,7 +269,7 @@ Rules you must always follow:
 [Explanation & Tafsir]
 [Real Life Connection]
 
-8. IMPORTANT — after your answer, you MUST add this block. Identify the exact Surah name, chapter number, and verse number for every Quran source listed below, using your knowledge of the Quran:
+11. IMPORTANT — after your answer, you MUST add this block. Identify the exact Surah name, chapter number, and verse number for every Quran source listed below, using your knowledge of the Quran:
 <QURAN_REFS>
 [{"index":1,"surah_name":"Al-Baqarah","chapter":2,"verse":255},{"index":2,...}]
 </QURAN_REFS>
@@ -230,11 +284,13 @@ Teenager's question: ${question}`;
 async function runRAG(question, language, responseSize = 'medium') {
   const detectedLang = language || detectLanguage(question);
 
-  // Embed question
-  const queryEmbedding = await embedText(question);
+  // Expand Islamic terms (tawakkul → "trust reliance upon Allah") so the
+  // semantic search matches the English translations actually stored.
+  const expandedQuery = expandQuery(question);
+  const queryEmbedding = await embedText(expandedQuery);
 
-  // Search knowledge base
-  const sources = await searchKnowledge(queryEmbedding, 10);
+  // Search knowledge base — retrieve more candidates for better coverage
+  const sources = await searchKnowledge(queryEmbedding, 16);
 
   if (sources.length === 0) {
     return {

@@ -23,6 +23,10 @@ CREATE TABLE IF NOT EXISTS saved_answers (
 );
 
 -- RPC function for vector similarity search
+-- IMPORTANT: SET LOCAL ivfflat.probes raises recall. With lists=100 the default
+-- probes=1 only scans ~1% of rows (poor results). probes=15 scans ~15% — much
+-- better matches while staying fast. Re-run this whole block in the SQL Editor
+-- after changing it.
 CREATE OR REPLACE FUNCTION match_islamic_knowledge(
   query_embedding VECTOR(384),
   match_count INT DEFAULT 8
@@ -37,6 +41,9 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql AS $$
 BEGIN
+  -- Higher recall: scan more index lists for this query
+  SET LOCAL ivfflat.probes = 15;
+
   RETURN QUERY
   SELECT
     ik.id,
