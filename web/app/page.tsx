@@ -6,35 +6,78 @@ export default function HomePage() {
   return (
     <div className="min-h-screen pattern-bg">
       {/* Hero */}
-      <div className="relative bg-gradient-to-b from-[#0d3d25] via-[#1a5c38] to-[#236b42] overflow-hidden">
-        <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, #c9a84c 1px, transparent 1px), radial-gradient(circle at 75% 75%, #c9a84c 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
-        <div className="relative max-w-4xl mx-auto px-6 py-12 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#c9a84c]/20 border border-[#c9a84c]/40 rounded-full px-4 py-1.5 mb-6">
-            <span className="text-[#c9a84c] text-xs font-semibold tracking-widest uppercase">Authentic Islamic Knowledge</span>
+      <div className="relative bg-gradient-to-b from-[#071f12] via-[#0d3d25] to-[#1a5c38] overflow-hidden">
+        {/* Geometric background pattern */}
+        <div className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9a84c' stroke-width='0.5'%3E%3Cpolygon points='40,4 76,22 76,58 40,76 4,58 4,22'/%3E%3Cpolygon points='40,14 66,27 66,53 40,66 14,53 14,27'/%3E%3Cline x1='40' y1='4' x2='40' y2='14'/%3E%3Cline x1='76' y1='22' x2='66' y2='27'/%3E%3Cline x1='76' y1='58' x2='66' y2='53'/%3E%3Cline x1='40' y1='76' x2='40' y2='66'/%3E%3Cline x1='4' y1='58' x2='14' y2='53'/%3E%3Cline x1='4' y1='22' x2='14' y2='27'/%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '80px 80px',
+          }} />
+        {/* Radial glow */}
+        <div className="absolute inset-0 bg-radial-gradient pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 30%, rgba(201,168,76,0.12) 0%, transparent 70%)' }} />
+
+        <div className="relative max-w-4xl mx-auto px-6 py-16 text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-[#c9a84c]/15 border border-[#c9a84c]/35 rounded-full px-5 py-1.5 mb-7 backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] animate-pulse" />
+            <span className="text-[#c9a84c] text-[11px] font-bold tracking-widest uppercase">Authentic Islamic Knowledge</span>
           </div>
-          <p className="arabic text-4xl text-[#f0d080] mb-3 leading-loose">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
-          <h1 className="text-white text-3xl font-bold mb-2 tracking-tight">Quran & Hadith Assistant</h1>
-          <p className="text-green-200/70 text-sm mb-8">Answers grounded exclusively in authentic Islamic sources</p>
+
+          {/* Bismillah */}
+          <p className="arabic text-5xl text-[#f0d080] mb-4 leading-loose drop-shadow-md">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
+
+          <h1 className="text-white text-4xl font-extrabold mb-3 tracking-tight leading-tight">
+            Quran & Hadith<br />
+            <span className="gradient-text">Assistant</span>
+          </h1>
+          <p className="text-green-200/60 text-sm mb-10 max-w-sm mx-auto leading-relaxed">
+            Answers grounded exclusively in authentic Islamic sources — Quran, Sahih Bukhari & more
+          </p>
+
+          {/* CTA */}
           <Link
             href="/chat"
-            className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0d3d25] font-bold px-8 py-3 rounded-full hover:bg-[#f0d080] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            className="pulse-gold inline-flex items-center gap-3 bg-gradient-to-r from-[#c9a84c] to-[#e8c05a] text-[#0d3d25] font-bold px-9 py-3.5 rounded-full hover:from-[#e8c05a] hover:to-[#f0d080] transition-all duration-300 shadow-xl shadow-[#c9a84c]/25 hover:shadow-[#c9a84c]/40 hover:-translate-y-1 text-sm"
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
             Ask a Question
-            <span className="text-lg">→</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
           </Link>
+
+          {/* Stats row */}
+          <div className="flex items-center justify-center gap-8 mt-12 pt-10 border-t border-white/10">
+            {[
+              { num: '6,236', label: 'Quranic Verses' },
+              { num: '7,563', label: 'Sahih Hadiths' },
+              { num: '2', label: 'Languages' },
+            ].map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-[#c9a84c] font-bold text-xl">{s.num}</p>
+                <p className="text-green-200/50 text-xs mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Daily Ayah */}
         <DailyAyah />
 
         {/* Topics */}
         <div>
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-5">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c9a84c]/30" />
-            <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Explore Topics</span>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#c9a84c]" />
+              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Explore Topics</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-[#c9a84c]" />
+            </div>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c9a84c]/30" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -42,34 +85,70 @@ export default function HomePage() {
               <Link
                 key={topic.id}
                 href={`/chat?prefill=${encodeURIComponent(topic.query)}`}
-                style={{ animationDelay: `${i * 60}ms` }}
-                className="fade-in group bg-white/80 backdrop-blur border border-[#c9a84c]/20 rounded-2xl p-4 text-center hover:border-[#c9a84c]/60 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                style={{ animationDelay: `${i * 55}ms` }}
+                className="fade-in group relative bg-white/80 backdrop-blur border border-[#c9a84c]/15 rounded-2xl p-4 text-center hover:border-[#c9a84c]/50 hover:shadow-lg hover:shadow-[#c9a84c]/10 hover:-translate-y-1 transition-all duration-250 overflow-hidden"
               >
-                <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-200">{topic.emoji}</div>
-                <div className="text-xs font-semibold text-[#1a5c38]">{topic.label}</div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#c9a84c]/0 to-[#c9a84c]/0 group-hover:from-[#c9a84c]/5 group-hover:to-[#1a5c38]/5 transition-all duration-300 rounded-2xl" />
+                <div className="relative text-3xl mb-2.5 group-hover:scale-110 transition-transform duration-250">{topic.emoji}</div>
+                <div className="relative text-xs font-semibold text-[#1a5c38]">{topic.label}</div>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Info cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { icon: '📖', title: 'Quran', desc: 'Full English & Urdu translations with verse references' },
-            { icon: '📜', title: 'Sahih Bukhari', desc: 'Authentic hadith from all 9 volumes' },
-            { icon: '🔍', title: 'AI-Powered', desc: 'Semantic search finds the most relevant sources' },
-          ].map(card => (
-            <div key={card.title} className="bg-white/70 backdrop-blur border border-[#c9a84c]/20 rounded-2xl p-4">
-              <div className="text-2xl mb-2">{card.icon}</div>
-              <p className="font-bold text-[#1a5c38] text-sm mb-1">{card.title}</p>
-              <p className="text-xs text-gray-500 leading-relaxed">{card.desc}</p>
-            </div>
-          ))}
+        {/* Source cards */}
+        <div>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c9a84c]/30" />
+            <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Sources</span>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c9a84c]/30" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                icon: '📖',
+                title: 'Holy Quran',
+                desc: 'Full English & Urdu translations with every verse reference',
+                tag: '6,236 verses',
+                color: 'from-emerald-500/10 to-emerald-600/5',
+                border: 'border-emerald-200/50',
+              },
+              {
+                icon: '📜',
+                title: 'Sahih Bukhari',
+                desc: 'Authentic hadith collection from all 9 volumes',
+                tag: '7,563 hadiths',
+                color: 'from-amber-500/10 to-amber-600/5',
+                border: 'border-amber-200/50',
+              },
+              {
+                icon: '🤖',
+                title: 'AI-Powered Search',
+                desc: 'Semantic search finds the most relevant sources instantly',
+                tag: 'Multilingual',
+                color: 'from-blue-500/10 to-blue-600/5',
+                border: 'border-blue-200/50',
+              },
+            ].map(card => (
+              <div key={card.title} className={`bg-gradient-to-br ${card.color} border ${card.border} backdrop-blur rounded-2xl p-5`}>
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-2xl">{card.icon}</span>
+                  <span className="text-[10px] font-bold bg-white/60 border border-[#c9a84c]/20 text-[#1a5c38] px-2 py-0.5 rounded-full">{card.tag}</span>
+                </div>
+                <p className="font-bold text-[#1a5c38] text-sm mb-1.5">{card.title}</p>
+                <p className="text-xs text-gray-500 leading-relaxed">{card.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <p className="text-xs text-gray-400 text-center pb-4 border-t border-[#c9a84c]/20 pt-4">
-          ⚠️ Not a fatwa service. For religious rulings, consult a qualified Islamic scholar (Mufti).
-        </p>
+        {/* Disclaimer */}
+        <div className="flex items-center gap-3 bg-amber-50/80 border border-amber-200/60 rounded-2xl p-4">
+          <span className="text-amber-500 text-lg shrink-0">⚠️</span>
+          <p className="text-xs text-amber-700 leading-relaxed">
+            <span className="font-bold">Note:</span> This is not a fatwa service. For religious rulings and legal opinions, please consult a qualified Islamic scholar (Mufti).
+          </p>
+        </div>
       </div>
     </div>
   );
