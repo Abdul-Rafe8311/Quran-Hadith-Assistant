@@ -6,6 +6,7 @@ export interface GeminiResponse {
     verse: number;
     text: string;
     arabic_text?: string;
+    explanation?: string;
   }[];
   hadith_sources: {
     book: string;

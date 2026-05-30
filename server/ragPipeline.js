@@ -155,13 +155,14 @@ function buildContext(sources) {
 }
 
 function parseAnswer(rawAnswer, sources, quranRefs = []) {
-  // Build two lookup strategies:
-  // 1. By context index (if Claude used the [N] index from the prompt)
-  const refByIdx = {};
+  // Map Claude's per-verse data by "chapter:verse" (DB now has exact refs) and
+  // by sequential order as a fallback.
+  const refByCV = {};
   for (const r of quranRefs) {
-    if (r?.index) refByIdx[r.index] = r;
+    if (r?.chapter && r?.verse) refByCV[`${r.chapter}:${r.verse}`] = r;
   }
-  // 2. Sequential — assign refs in order to sources that lack DB metadata
+  const refByIdx = {};
+  for (const r of quranRefs) { if (r?.index) refByIdx[r.index] = r; }
   const refsQueue = [...quranRefs];
 
   const seenContent = new Set();
@@ -180,9 +181,10 @@ function parseAnswer(rawAnswer, sources, quranRefs = []) {
       const dbChapter = s.metadata?.surah_number || 0;
       const dbVerse   = s.metadata?.ayah_number  || 0;
 
-      // Try index-based lookup (1-based context position = i+1 for quran-only count)
-      // Try sequential queue as fallback for unidentified sources
-      let ref = refByIdx[i + 1] || null;
+      // Match Claude's explanation: first by exact chapter:verse, then index, then order
+      let ref = (dbChapter && dbVerse && refByCV[`${dbChapter}:${dbVerse}`])
+        || refByIdx[i + 1]
+        || null;
       if (!ref && refsQueue.length > 0) ref = refsQueue.shift();
 
       return {
@@ -191,6 +193,7 @@ function parseAnswer(rawAnswer, sources, quranRefs = []) {
         verse:       dbVerse   || ref?.verse      || 0,
         text:        stripArtifacts(s.content),
         arabic_text: s.metadata?.arabic_text || '',
+        explanation: ref?.explanation || '',
       };
     });
 
@@ -269,11 +272,11 @@ Rules you must always follow:
 [Explanation & Tafsir]
 [Real Life Connection]
 
-11. IMPORTANT — after your answer, you MUST add this block. Identify the exact Surah name, chapter number, and verse number for every Quran source listed below, using your knowledge of the Quran:
+11. IMPORTANT — after your answer, you MUST add this exact block for EVERY Quran source listed below. For each one give: its Surah name, chapter number, verse number, AND a short, simple-English "explanation" (1-2 easy sentences a teenager can understand — what the verse is teaching and why it matters). Each source already shows its reference in the format "Surah Name (chapter:verse)" — use those exact numbers.
 <QURAN_REFS>
-[{"index":1,"surah_name":"Al-Baqarah","chapter":2,"verse":255},{"index":2,...}]
+[{"chapter":2,"verse":255,"surah_name":"Al-Baqarah","explanation":"This verse, called Ayatul Kursi, describes Allah's greatness and that He never gets tired of protecting everything. It reminds us how powerful and caring Allah is."}]
 </QURAN_REFS>
-Include ALL Quran sources. If a source covers multiple verses, use the first verse. Use standard English transliterations of Surah names.
+Include ALL Quran sources. Keep each explanation simple and warm. Use standard English transliterations of Surah names.
 
 Retrieved sources (Quran + Hadith + Tafsir):
 ${context}
@@ -306,7 +309,7 @@ async function runRAG(question, language, responseSize = 'medium') {
 
   // Build prompt using size-aware teenager persona
   const prompt = buildPrompt(question, context, detectedLang, responseSize);
-  const maxTokens = responseSize === 'small' ? 700 : responseSize === 'large' ? 3200 : 1800;
+  const maxTokens = responseSize === 'small' ? 900 : responseSize === 'large' ? 3500 : 2200;
 
   // Call Claude
   const message = await anthropic.messages.create({

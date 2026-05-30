@@ -36,6 +36,7 @@ export interface QuranSource {
   verse: number;
   text: string;
   arabic_text?: string;
+  explanation?: string;
 }
 
 export interface HadithSource {
