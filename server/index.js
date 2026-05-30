@@ -42,4 +42,13 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Islamic Q&A server running on port ${PORT}`);
+
+  // Keep-alive ping every 14 minutes to prevent Render free tier from sleeping
+  if (process.env.RENDER_EXTERNAL_URL) {
+    const url = `${process.env.RENDER_EXTERNAL_URL}/health`;
+    setInterval(() => {
+      fetch(url).catch(() => {});
+      console.log('[keep-alive] pinged', url);
+    }, 14 * 60 * 1000);
+  }
 });
