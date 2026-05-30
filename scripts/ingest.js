@@ -36,8 +36,39 @@ const BOOK_MAP = [
 
 const HADITH_NUMBER_PATTERNS = [
   /hadith[:\s#]+(\d+)/i,
-  /no\.[:\s]+(\d+)/i,
-  /^\s*(\d+)\./m,
+  /no\.[:\s#]+(\d+)/i,
+  /^\s*(\d{1,5})\./m,
+  /\((\d{1,5})\)/,
+  /bukhari[:\s#]+(\d+)/i,
+  /muslim[:\s#]+(\d+)/i,
+];
+
+// Quran verse reference patterns
+const QURAN_REF_PATTERNS = [
+  /\((\d{1,3})[:\s](\d{1,3})\)/,        // (2:5) or (2 5)
+  /\b(\d{1,3}):(\d{1,3})\b/,            // 2:5
+  /chapter\s+(\d{1,3})[,\s]+verse\s+(\d{1,3})/i,
+  /surah\s+(\d{1,3})[,\s]+ayah?\s+(\d{1,3})/i,
+];
+
+const SURAH_NAMES = [
+  'Al-Fatihah','Al-Baqarah','Al-Imran','An-Nisa','Al-Maidah','Al-Anam','Al-Araf',
+  'Al-Anfal','At-Tawbah','Yunus','Hud','Yusuf','Ar-Rad','Ibrahim','Al-Hijr',
+  'An-Nahl','Al-Isra','Al-Kahf','Maryam','Ta-Ha','Al-Anbiya','Al-Hajj','Al-Muminun',
+  'An-Nur','Al-Furqan','Ash-Shuara','An-Naml','Al-Qasas','Al-Ankabut','Ar-Rum',
+  'Luqman','As-Sajdah','Al-Ahzab','Saba','Fatir','Ya-Sin','As-Saffat','Sad',
+  'Az-Zumar','Ghafir','Fussilat','Ash-Shura','Az-Zukhruf','Ad-Dukhan','Al-Jathiyah',
+  'Al-Ahqaf','Muhammad','Al-Fath','Al-Hujurat','Qaf','Adh-Dhariyat','At-Tur',
+  'An-Najm','Al-Qamar','Ar-Rahman','Al-Waqiah','Al-Hadid','Al-Mujadila','Al-Hashr',
+  'Al-Mumtahanah','As-Saf','Al-Jumuah','Al-Munafiqun','At-Taghabun','At-Talaq',
+  'At-Tahrim','Al-Mulk','Al-Qalam','Al-Haqqah','Al-Maarij','Nuh','Al-Jinn',
+  'Al-Muzzammil','Al-Muddaththir','Al-Qiyamah','Al-Insan','Al-Mursalat','An-Naba',
+  'An-Naziat','Abasa','At-Takwir','Al-Infitar','Al-Mutaffifin','Al-Inshiqaq',
+  'Al-Buruj','At-Tariq','Al-Ala','Al-Ghashiyah','Al-Fajr','Al-Balad','Ash-Shams',
+  'Al-Layl','Ad-Duha','Ash-Sharh','At-Tin','Al-Alaq','Al-Qadr','Al-Bayyinah',
+  'Az-Zalzalah','Al-Adiyat','Al-Qariah','At-Takathur','Al-Asr','Al-Humazah',
+  'Al-Fil','Quraysh','Al-Maun','Al-Kawthar','Al-Kafirun','An-Nasr','Al-Masad',
+  'Al-Ikhlas','Al-Falaq','An-Nas',
 ];
 
 let embedder = null;
@@ -74,12 +105,60 @@ function detectBookMeta(filename) {
   return { book: path.basename(filename, '.pdf'), source_type: 'hadith', lang: 'en' };
 }
 
+/** Strip URLs, PDF watermarks, garbled OCR characters from raw text */
+function cleanText(text) {
+  return text
+    .replace(/https?:\/\/[^\s]+/g, '')          // remove URLs
+    .replace(/www\.[a-zA-Z0-9.-]+\.[a-z]{2,}[^\s]*/g, '') // remove www. links
+    .replace(/[{}_\\|<>]{2,}/g, '')              // remove PDF artifact runs
+    .replace(/\f/g, '\n')                         // form feed → newline
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      if (!t) return true; // keep blank lines
+      // discard lines that are mostly non-letter chars (OCR garbage)
+      const letters = (t.match(/[a-zA-Z؀-ۿ]/g) || []).length;
+      return letters / t.length > 0.25;
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function extractHadithNumber(text) {
   for (const pattern of HADITH_NUMBER_PATTERNS) {
     const match = text.match(pattern);
-    if (match) return parseInt(match[1], 10);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > 0 && num < 100000) return num;
+    }
   }
   return null;
+}
+
+function extractQuranMeta(text) {
+  // Try each reference pattern
+  for (const pattern of QURAN_REF_PATTERNS) {
+    const match = text.match(pattern);
+    if (match) {
+      const surahNum = parseInt(match[1], 10);
+      const ayahNum  = parseInt(match[2], 10);
+      if (surahNum >= 1 && surahNum <= 114 && ayahNum >= 1 && ayahNum <= 286) {
+        return {
+          surah_number: surahNum,
+          ayah_number: ayahNum,
+          surah_name: SURAH_NAMES[surahNum - 1] || '',
+        };
+      }
+    }
+  }
+  // Try matching a Surah name directly in the text
+  for (let i = 0; i < SURAH_NAMES.length; i++) {
+    if (text.includes(SURAH_NAMES[i])) {
+      return { surah_number: i + 1, ayah_number: null, surah_name: SURAH_NAMES[i] };
+    }
+  }
+  return {};
 }
 
 async function processPDF(filePath) {
@@ -105,10 +184,21 @@ async function processPDF(filePath) {
   let ingested = 0;
 
   for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i].trim();
+    const rawChunk = chunks[i].trim();
+    if (rawChunk.length < 20) continue;
+
+    const chunk = cleanText(rawChunk);
     if (chunk.length < 20) continue;
 
-    const hadithNumber = meta.source_type === 'hadith' ? extractHadithNumber(chunk) : null;
+    let chunkMeta = { book: meta.book, filename, chunk_index: i };
+
+    if (meta.source_type === 'hadith') {
+      chunkMeta.hadith_number = extractHadithNumber(chunk);
+    } else if (meta.source_type === 'quran') {
+      const quranMeta = extractQuranMeta(chunk);
+      chunkMeta = { ...chunkMeta, ...quranMeta };
+    }
+
     const embedding = await embed(chunk);
 
     batch.push({
@@ -116,12 +206,7 @@ async function processPDF(filePath) {
       embedding,
       source_type: meta.source_type,
       lang: meta.lang,
-      metadata: {
-        book: meta.book,
-        hadith_number: hadithNumber,
-        filename,
-        chunk_index: i,
-      },
+      metadata: chunkMeta,
     });
 
     ingested++;

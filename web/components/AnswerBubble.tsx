@@ -13,17 +13,49 @@ function containsArabic(text: string) {
   return /[؀-ۿ]/.test(text);
 }
 
+/** Remove PDF artifacts: URLs, garbled OCR lines, excessive special chars */
+function cleanText(raw: string): string {
+  return raw
+    .replace(/https?:\/\/[^\s]+/g, '')           // strip URLs
+    .replace(/www\.[^\s]+/g, '')                  // strip www. links
+    .replace(/[{}_\\|<>]{2,}/g, '')               // strip PDF artifact runs
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      if (!t) return true;
+      // keep line only if at least 30% of chars are letters (Latin or Arabic)
+      const letters = (t.match(/[a-zA-Z؀-ۿ]/g) || []).length;
+      return letters / t.length > 0.28;
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function QuranCard({ src, index }: { src: QuranSource; index: number }) {
   const [open, setOpen] = useState(false);
+
+  const hasRef = src.surah_name && Number(src.chapter) > 0 && Number(src.verse) > 0;
+  const onlyNumbers = !src.surah_name && Number(src.chapter) > 0 && Number(src.verse) > 0;
+  const label = hasRef
+    ? `Surah ${src.surah_name} — ${src.chapter}:${src.verse}`
+    : onlyNumbers
+      ? `Quran ${src.chapter}:${src.verse}`
+      : 'Quran Verse';
+
+  const translation = cleanText(src.text);
+
   return (
-    <div className="rounded-xl border border-emerald-200/70 overflow-hidden bg-emerald-50/50">
+    <div className="rounded-xl border border-emerald-200/70 overflow-hidden">
       <button
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-emerald-50 transition-colors"
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left bg-emerald-50/60 hover:bg-emerald-50 transition-colors"
         onClick={() => setOpen(v => !v)}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="shrink-0 w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
-          <span className="text-xs font-bold text-emerald-800">📖 {src.surah_name} {src.chapter}:{src.verse}</span>
+          <span className="shrink-0 w-6 h-6 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
+          <div className="min-w-0">
+            <span className="text-xs font-bold text-emerald-800 block truncate">📖 {label}</span>
+          </div>
         </div>
         <svg
           className={`shrink-0 w-4 h-4 text-emerald-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -34,16 +66,35 @@ function QuranCard({ src, index }: { src: QuranSource; index: number }) {
       </button>
 
       {open && (
-        <div className="border-t border-emerald-200/60 px-4 py-3 space-y-3 bg-white/70">
+        <div className="border-t border-emerald-200/60 bg-white space-y-3 p-4">
+          {/* Arabic text */}
           {src.arabic_text && (
             <div className="relative">
               <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#c9a84c]/60 via-[#c9a84c] to-[#c9a84c]/60 rounded-full" />
-              <p className="arabic text-xl text-[#0d3d25] leading-loose bg-[#fdf6e3] border border-[#c9a84c]/20 p-4 pl-5 rounded-xl">
-                {src.arabic_text}
-              </p>
+              <div className="bg-[#fdf6e3] border border-[#c9a84c]/20 rounded-xl p-4 pl-5">
+                <p className="text-[10px] font-bold text-[#c9a84c] uppercase tracking-widest mb-2">Arabic</p>
+                <p className="arabic text-2xl text-[#0d3d25] leading-loose">{src.arabic_text}</p>
+              </div>
             </div>
           )}
-          <p className="text-sm text-gray-700 leading-relaxed">{src.text}</p>
+
+          {/* Translation */}
+          {translation && (
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Translation</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{translation}</p>
+            </div>
+          )}
+
+          {/* Reference */}
+          {hasRef && (
+            <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              Holy Quran, Surah {src.surah_name}, Chapter {src.chapter}, Verse {src.verse}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -52,15 +103,22 @@ function QuranCard({ src, index }: { src: QuranSource; index: number }) {
 
 function HadithCard({ src, index }: { src: HadithSource; index: number }) {
   const [open, setOpen] = useState(false);
+
+  const hasNumber = src.number && Number(src.number) > 0;
+  const label = hasNumber ? `${src.book} — Hadith #${src.number}` : src.book || 'Hadith';
+  const text = cleanText(src.text);
+
   return (
-    <div className="rounded-xl border border-amber-200/70 overflow-hidden bg-amber-50/50">
+    <div className="rounded-xl border border-amber-200/70 overflow-hidden">
       <button
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-amber-50 transition-colors"
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left bg-amber-50/60 hover:bg-amber-50 transition-colors"
         onClick={() => setOpen(v => !v)}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="shrink-0 w-5 h-5 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
-          <span className="text-xs font-bold text-amber-800">📜 {src.book} {src.number ? `#${src.number}` : ''}</span>
+          <span className="shrink-0 w-6 h-6 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
+          <div className="min-w-0">
+            <span className="text-xs font-bold text-amber-800 block truncate">📜 {label}</span>
+          </div>
         </div>
         <svg
           className={`shrink-0 w-4 h-4 text-amber-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -71,8 +129,20 @@ function HadithCard({ src, index }: { src: HadithSource; index: number }) {
       </button>
 
       {open && (
-        <div className="border-t border-amber-200/60 px-4 py-3 bg-white/70">
-          <p className="text-sm text-gray-700 leading-relaxed">{src.text}</p>
+        <div className="border-t border-amber-200/60 bg-white p-4 space-y-3">
+          {/* Hadith text */}
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Hadith Text</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{text || 'Hadith text unavailable.'}</p>
+          </div>
+
+          {/* Reference */}
+          <div className="flex items-center gap-1.5 text-[11px] text-amber-700 font-semibold">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            {hasNumber ? `${src.book}, Hadith No. ${src.number}` : src.book}
+          </div>
         </div>
       )}
     </div>
@@ -115,7 +185,6 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
   return (
     <div className="px-4 py-2 flex justify-start fade-in">
       <div className="max-w-2xl w-full">
-        {/* Answer card */}
         <div className="bg-white rounded-2xl rounded-tl-sm shadow-sm border border-[#c9a84c]/15 overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#0d3d25] to-[#1a5c38] border-b border-[#c9a84c]/20">
@@ -167,7 +236,7 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
                 onClick={() => setSourcesOpen(v => !v)}
                 className="w-full flex items-center justify-between px-5 py-3 hover:bg-[#fdf6e3]/50 transition-colors"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.5">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                   </svg>

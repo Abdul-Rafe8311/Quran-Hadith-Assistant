@@ -46,14 +46,38 @@ async function searchKnowledge(queryEmbedding, limit = 8) {
   return data || [];
 }
 
+function stripArtifacts(text) {
+  return (text || '')
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/www\.[^\s]+/g, '')
+    .replace(/[{}_\\|<>]{2,}/g, '')
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      if (!t) return true;
+      const letters = (t.match(/[a-zA-Z؀-ۿ]/g) || []).length;
+      return letters / t.length > 0.25;
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function buildContext(sources) {
   return sources
     .map((s, i) => {
       const meta = s.metadata || {};
+      const content = stripArtifacts(s.content);
       if (s.source_type === 'quran') {
-        return `[${i + 1}] Quran - Surah ${meta.surah_name || ''} (${meta.surah_number || ''}:${meta.ayah_number || ''}): ${s.content}`;
+        const ref = meta.surah_name
+          ? `Surah ${meta.surah_name} (${meta.surah_number || '?'}:${meta.ayah_number || '?'})`
+          : 'Quran';
+        return `[${i + 1}] ${ref}:\n${content}`;
       } else {
-        return `[${i + 1}] ${meta.book || 'Hadith'} #${meta.hadith_number || ''}: ${s.content}`;
+        const ref = meta.hadith_number
+          ? `${meta.book || 'Hadith'} #${meta.hadith_number}`
+          : (meta.book || 'Hadith');
+        return `[${i + 1}] ${ref}:\n${content}`;
       }
     })
     .join('\n\n');
@@ -73,7 +97,7 @@ function parseAnswer(rawAnswer, sources) {
       surah_name: s.metadata?.surah_name || '',
       chapter: s.metadata?.surah_number || 0,
       verse: s.metadata?.ayah_number || 0,
-      text: s.content,
+      text: stripArtifacts(s.content),
       arabic_text: s.metadata?.arabic_text || '',
     }));
 
@@ -89,7 +113,7 @@ function parseAnswer(rawAnswer, sources) {
     .map(s => ({
       book: s.metadata?.book || '',
       number: s.metadata?.hadith_number || 0,
-      text: s.content,
+      text: stripArtifacts(s.content),
     }));
 
   return { quran_sources, hadith_sources };
