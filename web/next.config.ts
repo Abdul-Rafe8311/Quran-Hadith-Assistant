@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  trailingSlash: true,
+  // No static export — Vercel runs Next.js natively (better performance + routing)
 };
 
 export default nextConfig;
