@@ -60,8 +60,15 @@ function buildContext(sources) {
 }
 
 function parseAnswer(rawAnswer, sources) {
+  const seenQuran = new Set();
   const quran_sources = sources
     .filter(s => s.source_type === 'quran')
+    .filter(s => {
+      const key = `${s.metadata?.surah_number}:${s.metadata?.ayah_number}`;
+      if (seenQuran.has(key)) return false;
+      seenQuran.add(key);
+      return true;
+    })
     .map(s => ({
       surah_name: s.metadata?.surah_name || '',
       chapter: s.metadata?.surah_number || 0,
@@ -70,8 +77,15 @@ function parseAnswer(rawAnswer, sources) {
       arabic_text: s.metadata?.arabic_text || '',
     }));
 
+  const seenHadith = new Set();
   const hadith_sources = sources
     .filter(s => s.source_type === 'hadith')
+    .filter(s => {
+      const key = `${s.metadata?.book}#${s.metadata?.hadith_number}`;
+      if (seenHadith.has(key)) return false;
+      seenHadith.add(key);
+      return true;
+    })
     .map(s => ({
       book: s.metadata?.book || '',
       number: s.metadata?.hadith_number || 0,
@@ -97,7 +111,7 @@ async function runRAG(question, language) {
 
   if (sources.length === 0) {
     return {
-      answer: 'This requires deeper scholarly analysis. Please consult a qualified Islamic scholar for a proper ruling.',
+      answer: 'No matching sources were found in the knowledge base for this question. Please try rephrasing your question.',
       quran_sources: [],
       hadith_sources: [],
       language: detectedLang,
@@ -108,30 +122,30 @@ async function runRAG(question, language) {
   const context = buildContext(sources);
 
   // Build prompt
-  const prompt = `You are a trusted Islamic knowledge assistant. Answer ONLY using the retrieved Quran verses and Hadith provided below.
+  const prompt = `You are a friendly and knowledgeable Islamic assistant. You have access to Quran verses (with Arabic text and Tafsir/explanation) and authentic Hadith. Answer every question fully and helpfully using the sources below.
 
-Strict rules you must never break:
-1. Use ONLY the sources listed below. Never add outside knowledge.
-2. Cite every claim: Quran as (Surah Name Chapter:Verse), Hadith as (Book Name #Number).
-3. If the sources are not enough to answer, say exactly: 'This requires deeper scholarly analysis. Please consult a qualified Islamic scholar for a proper ruling.'
-4. Never give personal opinion. Never speculate. Never fabricate.
-5. Structure every answer exactly like this:
+Rules:
+1. Always give a clear, complete answer based on the sources below. Do not refuse to answer.
+2. Write in simple, easy-to-understand English (or Urdu if the user wrote in Urdu). Avoid difficult words. Explain things as if talking to someone who is new to Islam.
+3. Cite your sources: Quran as (Surah Name Chapter:Verse), Hadith as (Book Name #Number).
+4. Use the Tafsir and context in the sources to give a thorough explanation — not just a one-line answer.
+5. Never make up information. Stick to what the sources say.
+6. ONLY add "Note: For a personal fatwa or religious ruling, please consult a qualified scholar (Mufti)." if the user is explicitly asking for a legal fatwa about their personal situation. Do NOT add this note for general knowledge questions.
+7. Structure every answer like this:
 
-   [Direct Answer]
-   2-3 sentences directly answering the question.
+[Direct Answer]
+A clear 2-3 sentence answer to the question in simple words.
 
-   [Quranic Evidence]
-   List each retrieved Quran verse with full citation.
+[Quranic Evidence]
+Quote and explain each relevant Quran verse. Include what it means in simple terms.
 
-   [Hadith Evidence]
-   List each retrieved Hadith with full citation.
+[Hadith Evidence]
+Quote and explain each relevant Hadith in simple words.
 
-   [Context & Tafsir]
-   Brief scholarly context and explanation.
+[Explanation & Tafsir]
+Use the Tafsir/commentary from the sources to explain the topic more deeply in easy language.
 
-6. If user wrote in Urdu, respond fully in Urdu. If user wrote in English, respond fully in English.
-
-Retrieved sources:
+Retrieved sources (Quran + Hadith + Tafsir):
 ${context}
 
 User question: ${question}`;
@@ -139,7 +153,7 @@ User question: ${question}`;
   // Call Claude
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
+    max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   });
   const answer = message.content[0].text;

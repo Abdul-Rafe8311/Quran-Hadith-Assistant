@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import CitationChip from './CitationChip';
 import { supabase, QuranSource, HadithSource } from '../lib/supabase';
 
 interface Props {
@@ -14,9 +13,76 @@ function containsArabic(text: string) {
   return /[؀-ۿ]/.test(text);
 }
 
+function QuranCard({ src, index }: { src: QuranSource; index: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-emerald-200/70 overflow-hidden bg-emerald-50/50">
+      <button
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-emerald-50 transition-colors"
+        onClick={() => setOpen(v => !v)}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="shrink-0 w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
+          <span className="text-xs font-bold text-emerald-800">📖 {src.surah_name} {src.chapter}:{src.verse}</span>
+        </div>
+        <svg
+          className={`shrink-0 w-4 h-4 text-emerald-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+        >
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="border-t border-emerald-200/60 px-4 py-3 space-y-3 bg-white/70">
+          {src.arabic_text && (
+            <div className="relative">
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#c9a84c]/60 via-[#c9a84c] to-[#c9a84c]/60 rounded-full" />
+              <p className="arabic text-xl text-[#0d3d25] leading-loose bg-[#fdf6e3] border border-[#c9a84c]/20 p-4 pl-5 rounded-xl">
+                {src.arabic_text}
+              </p>
+            </div>
+          )}
+          <p className="text-sm text-gray-700 leading-relaxed">{src.text}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HadithCard({ src, index }: { src: HadithSource; index: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-amber-200/70 overflow-hidden bg-amber-50/50">
+      <button
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-amber-50 transition-colors"
+        onClick={() => setOpen(v => !v)}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="shrink-0 w-5 h-5 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center">{index + 1}</span>
+          <span className="text-xs font-bold text-amber-800">📜 {src.book} {src.number ? `#${src.number}` : ''}</span>
+        </div>
+        <svg
+          className={`shrink-0 w-4 h-4 text-amber-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+        >
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="border-t border-amber-200/60 px-4 py-3 bg-white/70">
+          <p className="text-sm text-gray-700 leading-relaxed">{src.text}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AnswerBubble({ question, answer, quranSources, hadithSources }: Props) {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(true);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(answer);
@@ -44,13 +110,14 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
   }
 
   const lines = answer.split('\n');
+  const totalSources = quranSources.length + hadithSources.length;
 
   return (
     <div className="px-4 py-2 flex justify-start fade-in">
       <div className="max-w-2xl w-full">
         {/* Answer card */}
         <div className="bg-white rounded-2xl rounded-tl-sm shadow-sm border border-[#c9a84c]/15 overflow-hidden">
-          {/* Card header bar */}
+          {/* Header */}
           <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#0d3d25] to-[#1a5c38] border-b border-[#c9a84c]/20">
             <div className="w-6 h-6 rounded-full bg-[#c9a84c]/20 border border-[#c9a84c]/50 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 20 20" width="12" height="12" fill="none">
@@ -59,18 +126,11 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
               </svg>
             </div>
             <span className="text-xs font-semibold text-[#c9a84c]/90 tracking-wide">Islamic Assistant</span>
-            <div className="ml-auto flex gap-1">
-              {quranSources.length > 0 && (
-                <span className="text-[10px] font-bold bg-[#c9a84c]/15 border border-[#c9a84c]/25 text-[#c9a84c] px-2 py-0.5 rounded-full">
-                  📖 {quranSources.length}
-                </span>
-              )}
-              {hadithSources.length > 0 && (
-                <span className="text-[10px] font-bold bg-white/10 border border-white/20 text-white/70 px-2 py-0.5 rounded-full">
-                  📜 {hadithSources.length}
-                </span>
-              )}
-            </div>
+            {totalSources > 0 && (
+              <span className="ml-auto text-[10px] font-bold bg-[#c9a84c]/15 border border-[#c9a84c]/25 text-[#c9a84c] px-2 py-0.5 rounded-full">
+                {totalSources} source{totalSources > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
 
           {/* Answer body */}
@@ -98,30 +158,49 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
                 <p key={i} className="text-sm text-gray-700 leading-relaxed mb-2">{line}</p>
               ) : <div key={i} className="h-1.5" />;
             })}
+          </div>
 
-            {/* Sources */}
-            {(quranSources.length > 0 || hadithSources.length > 0) && (
-              <div className="mt-5 pt-4 border-t border-[#c9a84c]/10">
-                <p className="text-[10px] font-bold text-[#c9a84c] uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          {/* Sources section */}
+          {totalSources > 0 && (
+            <div className="border-t border-[#c9a84c]/10">
+              <button
+                onClick={() => setSourcesOpen(v => !v)}
+                className="w-full flex items-center justify-between px-5 py-3 hover:bg-[#fdf6e3]/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.5">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                   </svg>
-                  Referenced Sources
-                </p>
-                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-[10px] font-bold text-[#c9a84c] uppercase tracking-widest">
+                    Referenced Sources ({totalSources})
+                  </span>
+                  {quranSources.length > 0 && (
+                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-semibold">📖 {quranSources.length} Quran</span>
+                  )}
+                  {hadithSources.length > 0 && (
+                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">📜 {hadithSources.length} Hadith</span>
+                  )}
+                </div>
+                <svg
+                  className={`w-4 h-4 text-[#c9a84c] transition-transform duration-200 ${sourcesOpen ? 'rotate-180' : ''}`}
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                >
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              {sourcesOpen && (
+                <div className="px-4 pb-4 space-y-2">
                   {quranSources.map((src, i) => (
-                    <CitationChip key={`q${i}`} type="quran"
-                      label={`${src.surah_name} ${src.chapter}:${src.verse}`}
-                      fullText={src.text} arabicText={src.arabic_text} />
+                    <QuranCard key={`q${i}`} src={src} index={i} />
                   ))}
                   {hadithSources.map((src, i) => (
-                    <CitationChip key={`h${i}`} type="hadith"
-                      label={`${src.book} #${src.number}`} fullText={src.text} />
+                    <HadithCard key={`h${i}`} src={src} index={i} />
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Action row */}
           <div className="flex border-t border-gray-100">
