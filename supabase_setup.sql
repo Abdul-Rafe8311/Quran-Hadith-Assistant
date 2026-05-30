@@ -11,8 +11,11 @@ CREATE TABLE IF NOT EXISTS islamic_knowledge (
   metadata JSONB
 );
 
-CREATE INDEX IF NOT EXISTS islamic_knowledge_embedding_idx
-ON islamic_knowledge USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+-- NOTE: We do NOT use an ivfflat index. At this dataset size (~8k rows) exact
+-- search (a sequential scan in the match function) is fast (<100ms) and gives
+-- PERFECT recall. An ivfflat index with default probes only scans ~1% of rows
+-- and returned wrong results. If you previously created the index, drop it:
+DROP INDEX IF EXISTS islamic_knowledge_embedding_idx;
 
 CREATE TABLE IF NOT EXISTS saved_answers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -22,11 +25,7 @@ CREATE TABLE IF NOT EXISTS saved_answers (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- RPC function for vector similarity search
--- IMPORTANT: SET LOCAL ivfflat.probes raises recall. With lists=100 the default
--- probes=1 only scans ~1% of rows (poor results). probes=15 scans ~15% — much
--- better matches while staying fast. Re-run this whole block in the SQL Editor
--- after changing it.
+-- RPC function for vector similarity search (EXACT — no index, perfect recall)
 CREATE OR REPLACE FUNCTION match_islamic_knowledge(
   query_embedding VECTOR(384),
   match_count INT DEFAULT 8
@@ -41,9 +40,6 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql AS $$
 BEGIN
-  -- Higher recall: scan more index lists for this query
-  SET LOCAL ivfflat.probes = 15;
-
   RETURN QUERY
   SELECT
     ik.id,
