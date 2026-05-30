@@ -84,31 +84,35 @@ function buildContext(sources) {
 }
 
 function parseAnswer(rawAnswer, sources, quranRefs = []) {
-  // refByIndex maps context position (1-based) → Claude's identified surah/verse
-  const refByIndex = {};
+  // Build two lookup strategies:
+  // 1. By context index (if Claude used the [N] index from the prompt)
+  const refByIdx = {};
   for (const r of quranRefs) {
-    if (r && r.index) refByIndex[r.index] = r;
+    if (r?.index) refByIdx[r.index] = r;
   }
+  // 2. Sequential — assign refs in order to sources that lack DB metadata
+  const refsQueue = [...quranRefs];
 
-  // Tag every source with its 1-based context position BEFORE any filtering
-  const tagged = sources.map((s, i) => ({ ...s, _ctxIdx: i + 1 }));
+  const seenContent = new Set();
 
-  const seenQuran = new Set();
-  const quran_sources = tagged
+  const quran_sources = sources
+    .filter(s => s.source_type === 'quran')
     .filter(s => {
-      if (s.source_type !== 'quran') return false;
-      // Deduplicate: use context index as fallback key when DB has no metadata
-      const key = `${s.metadata?.surah_number || s._ctxIdx}:${s.metadata?.ayah_number || 0}`;
-      if (seenQuran.has(key)) return false;
-      seenQuran.add(key);
+      // Deduplicate by first 60 chars of content
+      const key = s.content.substring(0, 60).trim();
+      if (seenContent.has(key)) return false;
+      seenContent.add(key);
       return true;
     })
-    .map(s => {
+    .map((s, i) => {
       const dbName    = s.metadata?.surah_name   || '';
       const dbChapter = s.metadata?.surah_number || 0;
       const dbVerse   = s.metadata?.ayah_number  || 0;
-      // Use Claude's identified ref when DB metadata is missing
-      const ref = refByIndex[s._ctxIdx] || null;
+
+      // Try index-based lookup (1-based context position = i+1 for quran-only count)
+      // Try sequential queue as fallback for unidentified sources
+      let ref = refByIdx[i + 1] || null;
+      if (!ref && refsQueue.length > 0) ref = refsQueue.shift();
 
       return {
         surah_name:  dbName    || ref?.surah_name || '',
@@ -120,17 +124,17 @@ function parseAnswer(rawAnswer, sources, quranRefs = []) {
     });
 
   const seenHadith = new Set();
-  const hadith_sources = tagged
+  const hadith_sources = sources
+    .filter(s => s.source_type === 'hadith')
     .filter(s => {
-      if (s.source_type !== 'hadith') return false;
       const key = `${s.metadata?.book}#${s.metadata?.hadith_number}`;
       if (seenHadith.has(key)) return false;
       seenHadith.add(key);
       return true;
     })
     .map(s => ({
-      book:   s.metadata?.book           || '',
-      number: s.metadata?.hadith_number  || 0,
+      book:   s.metadata?.book          || '',
+      number: s.metadata?.hadith_number || 0,
       text:   stripArtifacts(s.content),
     }));
 
@@ -231,14 +235,44 @@ async function runRAG(question, language, responseSize = 'medium') {
   });
   const rawAnswer = message.content[0].text;
 
-  // Parse the QURAN_REFS annotation block Claude adds
+  // Strip the QURAN_REFS block from displayed answer
+  const answer = rawAnswer.replace(/<QURAN_REFS>[\s\S]*?<\/QURAN_REFS>/g, '').trim();
+
+  // --- Method 1: parse structured <QURAN_REFS> JSON block ---
   let quranRefs = [];
   const refsMatch = rawAnswer.match(/<QURAN_REFS>([\s\S]*?)<\/QURAN_REFS>/);
   if (refsMatch) {
-    try { quranRefs = JSON.parse(refsMatch[1].trim()); } catch {}
+    try {
+      quranRefs = JSON.parse(refsMatch[1].trim());
+    } catch {
+      // Malformed JSON — try extracting individual objects
+      const objRe = /\{[^{}]+\}/g;
+      let m;
+      while ((m = objRe.exec(refsMatch[1])) !== null) {
+        try {
+          const o = JSON.parse(m[0]);
+          if (o.chapter >= 1 && o.chapter <= 114) quranRefs.push(o);
+        } catch {}
+      }
+    }
   }
-  // Strip the refs block from the answer shown to users
-  const answer = rawAnswer.replace(/<QURAN_REFS>[\s\S]*?<\/QURAN_REFS>/g, '').trim();
+
+  // --- Method 2: parse citations Claude naturally writes in the answer ---
+  // e.g. "Surah Al-Baqarah (2:43)" or "Al-Maidah 5:3" — used when block is absent/empty
+  if (quranRefs.length === 0) {
+    const citRe = /(?:Surah\s+)?([A-Z][A-Za-z'-]+(?:\s+[A-Za-z'-]+){0,2})\s*\(?\s*(\d{1,3})\s*:\s*(\d{1,3})\s*\)?/g;
+    const seen = new Set();
+    let cm;
+    while ((cm = citRe.exec(rawAnswer)) !== null) {
+      const chapter = parseInt(cm[2], 10);
+      const verse   = parseInt(cm[3], 10);
+      const key = `${chapter}:${verse}`;
+      if (chapter >= 1 && chapter <= 114 && !seen.has(key)) {
+        seen.add(key);
+        quranRefs.push({ surah_name: cm[1].trim(), chapter, verse });
+      }
+    }
+  }
 
   const { quran_sources, hadith_sources } = parseAnswer(answer, sources, quranRefs);
 

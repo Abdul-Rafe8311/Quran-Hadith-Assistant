@@ -97,13 +97,15 @@ function QuranCard({ src, index }: { src: QuranSource; index: number }) {
   const verseNum  = hasDbRef ? dbVerse   : textRef.verseNum;
   const surahName = dbName || textRef.surahName || (surahNum ? SURAH_NAMES[surahNum] : undefined);
 
-  const chipLabel = surahName && surahNum && verseNum
-    ? `Surah ${surahName} (${surahNum}:${verseNum})`
+  const chipLabel = surahName && verseNum
+    ? `Surah ${surahName} — Ayah ${verseNum}`
     : surahName && surahNum
       ? `Surah ${surahName} (Ch. ${surahNum})`
-      : verseNum
-        ? `Quran — Verse ${verseNum}`
-        : 'Quran Verse';
+      : surahNum && verseNum
+        ? `Quran ${surahNum}:${verseNum}`
+        : verseNum
+          ? `Quran — Ayah ${verseNum}`
+          : 'Quran Verse';
 
   return (
     <div className="rounded-xl border border-emerald-200/70 overflow-hidden">
@@ -127,35 +129,26 @@ function QuranCard({ src, index }: { src: QuranSource; index: number }) {
         <div className="border-t border-emerald-200/60 bg-white divide-y divide-emerald-100/60">
 
           {/* ── Reference banner ── */}
-          <div className="px-4 py-3 bg-emerald-700 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" strokeWidth="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-              <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-widest">Quran Reference</span>
-            </div>
-            <div className="flex flex-wrap gap-2 ml-auto">
-              {surahName && (
-                <span className="bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  Surah {surahName}
-                </span>
-              )}
-              {surahNum && (
-                <span className="bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  Chapter {surahNum}
-                </span>
-              )}
-              {verseNum && (
-                <span className="bg-[#c9a84c] text-[#0d3d25] text-xs font-bold px-3 py-1 rounded-full">
-                  Ayah (Verse) {verseNum}
-                </span>
-              )}
-              {!surahNum && !verseNum && (
-                <span className="bg-white/10 text-emerald-200 text-xs px-3 py-1 rounded-full italic">
-                  Reference not in stored data
-                </span>
-              )}
-            </div>
+          <div className="px-4 py-3 bg-emerald-700 flex flex-wrap items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#86efac" strokeWidth="2" className="shrink-0">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-widest mr-1">Quran Reference</span>
+            {surahName && (
+              <span className="bg-white/15 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                Surah {surahName}
+              </span>
+            )}
+            {surahNum && (
+              <span className="bg-white/15 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                Chapter {surahNum}
+              </span>
+            )}
+            {verseNum && (
+              <span className="bg-[#c9a84c] text-[#0d3d25] text-xs font-bold px-2.5 py-1 rounded-full">
+                Ayah {verseNum}
+              </span>
+            )}
           </div>
 
           {/* ── Arabic text ── */}
