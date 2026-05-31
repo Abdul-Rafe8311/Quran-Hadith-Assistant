@@ -52,7 +52,7 @@ function cleanText(raw: string): string {
 }
 
 /** Render the answer body in the "The Quran says → Commentary → follow-up" style */
-function renderAnswerBody(answer: string) {
+function renderAnswerBody(answer: string, showArabic: boolean) {
   const lines = answer.split('\n').map(l => l.trim());
   const out: React.ReactNode[] = [];
   let bullets: string[] = [];
@@ -95,9 +95,12 @@ function renderAnswerBody(answer: string) {
       continue;
     }
 
-    // Arabic verse — pair with the following translation line into one blockquote
+    // Arabic verse line
     if (containsArabic(line)) {
       flush();
+      // When the user didn't ask in Arabic, skip the Arabic line — the
+      // following translation line will be rendered on its own.
+      if (!showArabic) continue;
       const next = lines[i + 1] || '';
       const hasTrans = /^["“]/.test(next);
       out.push(
@@ -201,7 +204,7 @@ function parseRefFromText(text: string): { surahNum?: number; verseNum?: number;
   return {};
 }
 
-function QuranCard({ src, index }: { src: QuranSource; index: number }) {
+function QuranCard({ src, index, showArabic }: { src: QuranSource; index: number; showArabic: boolean }) {
   const [open, setOpen] = useState(false);
 
   const translation = cleanText(src.text);
@@ -272,8 +275,8 @@ function QuranCard({ src, index }: { src: QuranSource; index: number }) {
             )}
           </div>
 
-          {/* ── Arabic text ── */}
-          {src.arabic_text && (
+          {/* ── Arabic text (only when the user asked in Arabic) ── */}
+          {showArabic && src.arabic_text && (
             <div className="p-4">
               <p className="text-[10px] font-bold text-[#c9a84c] uppercase tracking-widest mb-3">Arabic Text</p>
               <div className="relative">
@@ -423,6 +426,8 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
   }
 
   const totalSources = quranSources.length + hadithSources.length;
+  // Show Arabic only when the user's own question contained Arabic
+  const showArabic = containsArabic(question);
 
   return (
     <div className="px-4 py-2 flex justify-start fade-in">
@@ -446,7 +451,7 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
 
           {/* Answer body */}
           <div className="px-5 py-4">
-            {renderAnswerBody(answer)}
+            {renderAnswerBody(answer, showArabic)}
           </div>
 
           {/* Sources section */}
@@ -481,7 +486,7 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
               {sourcesOpen && (
                 <div className="px-4 pb-4 space-y-2">
                   {quranSources.map((src, i) => (
-                    <QuranCard key={`q${i}`} src={src} index={i} />
+                    <QuranCard key={`q${i}`} src={src} index={i} showArabic={showArabic} />
                   ))}
                   {hadithSources.map((src, i) => (
                     <HadithCard key={`h${i}`} src={src} index={i} />
