@@ -51,6 +51,107 @@ function cleanText(raw: string): string {
     .trim();
 }
 
+/** Render the answer body in the "The Quran says → Commentary → follow-up" style */
+function renderAnswerBody(answer: string) {
+  const lines = answer.split('\n').map(l => l.trim());
+  const out: React.ReactNode[] = [];
+  let bullets: string[] = [];
+  let k = 0;
+
+  const flush = () => {
+    if (!bullets.length) return;
+    const items = bullets;
+    bullets = [];
+    out.push(
+      <ul key={`ul${k++}`} className="space-y-2 my-2.5">
+        {items.map((b, j) => (
+          <li key={j} className="flex gap-2.5 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#c9a84c] shrink-0" />
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) { flush(); continue; }
+
+    // Section heading [The Quran says] / [Commentary] / ...
+    if (line.startsWith('[') && line.endsWith(']')) {
+      flush();
+      out.push(
+        <h3 key={`h${k++}`} className="text-base font-bold text-[#0d3d25] dark:text-gray-100 mt-5 first:mt-0 mb-2">
+          {line.slice(1, -1)}
+        </h3>
+      );
+      continue;
+    }
+
+    // Bullet point
+    if (/^[-•*]\s+/.test(line)) {
+      bullets.push(line.replace(/^[-•*]\s+/, ''));
+      continue;
+    }
+
+    // Arabic verse — pair with the following translation line into one blockquote
+    if (containsArabic(line)) {
+      flush();
+      const next = lines[i + 1] || '';
+      const hasTrans = /^["“]/.test(next);
+      out.push(
+        <blockquote key={`q${k++}`} className="my-3 pl-4 border-l-[3px] border-[#c9a84c]">
+          <p className="arabic text-xl text-[#0d3d25] dark:text-[#f0d080] leading-loose mb-1">{line}</p>
+          {hasTrans && <p className="text-sm italic text-gray-600 dark:text-gray-300 leading-relaxed">{next}</p>}
+        </blockquote>
+      );
+      if (hasTrans) i++;
+      continue;
+    }
+
+    // Standalone translation line (quoted)
+    if (/^["“]/.test(line)) {
+      flush();
+      out.push(
+        <p key={`t${k++}`} className="text-sm italic text-gray-600 dark:text-gray-300 leading-relaxed my-2 pl-4 border-l-[3px] border-[#c9a84c]">{line}</p>
+      );
+      continue;
+    }
+
+    // Reference line (e.g. "Surah Adh-Dhariyat (51:56)" or "Sahih Bukhari #5386")
+    if (/\d{1,3}\s*:\s*\d{1,3}/.test(line) || /#\s*\d+/.test(line)) {
+      flush();
+      out.push(
+        <p key={`r${k++}`} className="text-sm font-semibold text-[#1a5c38] dark:text-[#e8c668] mb-2">{line}</p>
+      );
+      continue;
+    }
+
+    // Follow-up question → highlighted box
+    if (line.endsWith('?')) {
+      flush();
+      out.push(
+        <div key={`f${k++}`} className="mt-4 flex items-start gap-2.5 bg-[#fdf6e3] dark:bg-white/5 border border-[#c9a84c]/25 rounded-xl px-4 py-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2" className="mt-0.5 shrink-0">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+          </svg>
+          <p className="text-sm text-[#1a5c38] dark:text-gray-200 font-medium leading-relaxed">{line}</p>
+        </div>
+      );
+      continue;
+    }
+
+    // Plain paragraph
+    flush();
+    out.push(
+      <p key={`p${k++}`} className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-2">{line}</p>
+    );
+  }
+  flush();
+  return out;
+}
+
 const SURAH_NAMES: Record<number, string> = {
   1:'Al-Fatihah',2:'Al-Baqarah',3:'Al-Imran',4:'An-Nisa',5:'Al-Maidah',
   6:'Al-Anam',7:'Al-Araf',8:'Al-Anfal',9:'At-Tawbah',10:'Yunus',
@@ -307,7 +408,6 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
     setTimeout(() => setSaved(false), 2000);
   }
 
-  const lines = answer.split('\n');
   const totalSources = quranSources.length + hadithSources.length;
 
   return (
@@ -332,29 +432,7 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
 
           {/* Answer body */}
           <div className="px-5 py-4">
-            {lines.map((line, i) => {
-              if (line.startsWith('[') && line.endsWith(']')) {
-                return (
-                  <div key={i} className="flex items-center gap-2.5 mt-5 mb-3">
-                    <div className="w-0.5 h-5 rounded-full bg-gradient-to-b from-[#c9a84c] to-[#c9a84c]/40" />
-                    <p className="text-xs font-bold text-[#1a5c38] dark:text-[#e8c668] uppercase tracking-widest">{line.slice(1, -1)}</p>
-                  </div>
-                );
-              }
-              if (containsArabic(line)) {
-                return (
-                  <div key={i} className="relative my-4">
-                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#c9a84c]/60 via-[#c9a84c] to-[#c9a84c]/60 rounded-full" />
-                    <p className="arabic text-xl text-[#0d3d25] dark:text-[#f0d080] leading-loose bg-[#fdf6e3] dark:bg-[#c9a84c]/10 border border-[#c9a84c]/20 p-4 pl-5 rounded-xl">
-                      {line}
-                    </p>
-                  </div>
-                );
-              }
-              return line.trim() ? (
-                <p key={i} className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-2">{line}</p>
-              ) : <div key={i} className="h-1.5" />;
-            })}
+            {renderAnswerBody(answer)}
           </div>
 
           {/* Sources section */}
