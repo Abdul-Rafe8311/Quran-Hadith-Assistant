@@ -426,8 +426,9 @@ export default function AnswerBubble({ question, answer, quranSources, hadithSou
   }
 
   const totalSources = quranSources.length + hadithSources.length;
-  // Show Arabic only when the user's own question contained Arabic
-  const showArabic = containsArabic(question);
+  // Show the Arabic verse only when the user asks for it (e.g. "also give me
+  // the arabic"), or if they wrote their question in Arabic.
+  const showArabic = /\barabic\b/i.test(question) || containsArabic(question);
 
   return (
     <div className="px-4 py-2 flex justify-start fade-in">
