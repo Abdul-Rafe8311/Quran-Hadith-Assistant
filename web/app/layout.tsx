@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full flex flex-col bg-[#efe8da] dark:bg-[#0a140f]">
+      <body className="min-h-full flex flex-col bg-[#efe8da] dark:bg-[#0a140f] overflow-x-hidden">
         <Navbar />
         <main className="flex-1 flex flex-col">{children}</main>
       </body>
