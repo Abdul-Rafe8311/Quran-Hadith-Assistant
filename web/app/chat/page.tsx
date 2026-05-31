@@ -139,9 +139,9 @@ function ChatContent() {
               <div className="absolute inset-0 rounded-3xl border-2 border-[#c9a84c]/25 animate-ping" style={{ animationDuration: '3s' }} />
             </div>
 
-            <p className="arabic text-3xl text-[#1a5c38] mb-3 leading-loose">سُبْحَانَ اللّٰه</p>
-            <h2 className="text-base font-bold text-[#0d3d25] mb-1.5">Got a question about Islam?</h2>
-            <p className="text-gray-500 text-sm mb-1">Ask anything — in English or <span className="font-medium text-[#1a5c38]">اردو میں</span></p>
+            <p className="arabic text-3xl text-[#1a5c38] dark:text-[#f0d080] mb-3 leading-loose">سُبْحَانَ اللّٰه</p>
+            <h2 className="text-base font-bold text-[#0d3d25] dark:text-gray-100 mb-1.5">Got a question about Islam?</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Ask anything — in English or <span className="font-medium text-[#1a5c38] dark:text-[#e8c668]">اردو میں</span></p>
             <p className="text-xs text-[#c9a84c] font-medium mb-8">From Quran &amp; authentic Hadith, explained simply</p>
 
             {/* Quick question chips */}
@@ -151,7 +151,7 @@ function ChatContent() {
                   key={q}
                   onClick={() => setInput(q)}
                   style={{ animationDelay: `${i * 60}ms` }}
-                  className="fade-in text-xs bg-white border border-[#c9a84c]/25 text-[#1a5c38] font-semibold px-4 py-2.5 rounded-full hover:border-[#c9a84c]/60 hover:bg-[#fdf6e3] hover:-translate-y-0.5 transition-all duration-200 shadow-soft"
+                  className="fade-in text-xs bg-white dark:bg-[#13211a] border border-[#c9a84c]/25 dark:border-white/10 text-[#1a5c38] dark:text-gray-200 font-semibold px-4 py-2.5 rounded-full hover:border-[#c9a84c]/60 hover:bg-[#fdf6e3] dark:hover:bg-[#1a2b22] hover:-translate-y-0.5 transition-all duration-200 shadow-soft"
                 >
                   {q}
                 </button>
@@ -211,10 +211,10 @@ function ChatContent() {
       </div>
 
       {/* Input bar */}
-      <div className="border-t border-[#c9a84c]/15 bg-white/95 backdrop-blur-md">
+      <div className="border-t border-[#c9a84c]/15 dark:border-white/10 bg-white/95 dark:bg-[#0d1a13]/95 backdrop-blur-md">
         {/* Response size selector */}
         <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">Response size:</span>
+          <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider shrink-0 mr-1">Response size:</span>
           {SIZE_OPTIONS.map(opt => (
             <button
               key={opt.value}
@@ -228,15 +228,15 @@ function ChatContent() {
               title={opt.description}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${
                 responseSize === opt.value
-                  ? 'bg-[#0d3d25] text-white border-[#0d3d25] shadow-sm'
-                  : 'text-gray-500 border-gray-200 hover:border-[#c9a84c]/50 hover:bg-[#fdf6e3]/60'
+                  ? 'bg-[#0d3d25] dark:bg-[#c9a84c] text-white dark:text-[#0a2e1c] border-[#0d3d25] dark:border-[#c9a84c] shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-[#c9a84c]/50 hover:bg-[#fdf6e3]/60 dark:hover:bg-white/5'
               }`}
             >
               <span>{opt.icon}</span>
               {opt.label}
             </button>
           ))}
-          <span className="ml-auto text-[10px] text-gray-400 hidden sm:block">{activeSizeOption.description}</span>
+          <span className="ml-auto text-[10px] text-gray-400 dark:text-gray-500 hidden sm:block">{activeSizeOption.description}</span>
         </div>
 
         {/* Text input */}
@@ -244,7 +244,7 @@ function ChatContent() {
           <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
-              className="w-full border border-[#c9a84c]/25 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#1a5c38]/60 focus:ring-2 focus:ring-[#1a5c38]/10 bg-[#fdf6e3]/50 max-h-32 placeholder-gray-400 transition-all duration-200 shadow-sm"
+              className="w-full border border-[#c9a84c]/25 dark:border-white/10 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#1a5c38]/60 focus:ring-2 focus:ring-[#1a5c38]/10 bg-[#fdf6e3]/50 dark:bg-[#13211a] dark:text-gray-100 max-h-32 placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200 shadow-sm"
               rows={1}
               value={input}
               onChange={e => setInput(e.target.value)}

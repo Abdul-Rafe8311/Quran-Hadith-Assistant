@@ -27,7 +27,7 @@ export default function DailyAyah() {
     return (
       <div className="rounded-2xl overflow-hidden border border-[#c9a84c]/25 shadow-sm">
         <div className="h-1 shimmer" />
-        <div className="bg-white/80 p-6">
+        <div className="bg-white/80 dark:bg-[#13211a] p-6">
           <div className="h-2.5 shimmer rounded w-20 mb-5" />
           <div className="h-7 shimmer rounded w-full mb-3" />
           <div className="h-4 shimmer rounded w-5/6 mb-2" />
@@ -44,7 +44,7 @@ export default function DailyAyah() {
       {/* Gold top bar */}
       <div className="h-1 bg-gradient-to-r from-[#c9a84c]/40 via-[#c9a84c] to-[#c9a84c]/40" />
 
-      <div className="relative bg-gradient-to-br from-white/95 to-[#fdf6e3]/90 backdrop-blur p-6 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-white/95 to-[#fdf6e3]/90 dark:from-[#13211a] dark:to-[#16241c] backdrop-blur p-6 overflow-hidden">
         {/* Decorative corner ornament */}
         <div className="absolute top-3 right-3 opacity-[0.08] slow-rotate">
           <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
@@ -74,14 +74,14 @@ export default function DailyAyah() {
         {meta.arabic_text != null && (
           <div className="relative mb-5">
             <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#c9a84c]/60 via-[#c9a84c] to-[#c9a84c]/60 rounded-full" />
-            <p className="arabic text-2xl text-[#0d3d25] leading-loose bg-[#0d3d25]/[0.04] rounded-xl p-4 pl-5 border border-[#c9a84c]/10">
+            <p className="arabic text-2xl text-[#0d3d25] dark:text-[#f0d080] leading-loose bg-[#0d3d25]/[0.04] dark:bg-[#c9a84c]/10 rounded-xl p-4 pl-5 border border-[#c9a84c]/10">
               {String(meta.arabic_text)}
             </p>
           </div>
         )}
 
         {/* Translation */}
-        <blockquote className="text-sm text-gray-700 leading-relaxed mb-4 italic pl-1 border-l-0">
+        <blockquote className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4 italic pl-1 border-l-0">
           &ldquo;{ayah?.content || 'In the name of Allah, the Most Gracious, the Most Merciful'}&rdquo;
         </blockquote>
 

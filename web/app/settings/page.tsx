@@ -4,14 +4,14 @@ import { supabase } from '../../lib/supabase';
 
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-[#c9a84c]/15 shadow-sm">
+    <div className="bg-white dark:bg-[#13211a] rounded-2xl overflow-hidden border border-[#c9a84c]/15 dark:border-white/10 shadow-sm">
       <div className="h-0.5 bg-gradient-to-r from-[#c9a84c]/30 via-[#c9a84c]/60 to-[#c9a84c]/30" />
       <div className="p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-[#0d3d25]/8 flex items-center justify-center text-[#1a5c38]">
+          <div className="w-7 h-7 rounded-lg bg-[#0d3d25]/8 dark:bg-[#c9a84c]/15 flex items-center justify-center text-[#1a5c38] dark:text-[#e8c668]">
             {icon}
           </div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{title}</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{title}</p>
         </div>
         {children}
       </div>
@@ -86,7 +86,7 @@ export default function SettingsPage() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c38" strokeWidth="2">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-        <h1 className="text-sm font-bold text-[#1a5c38] uppercase tracking-wide">Settings</h1>
+        <h1 className="text-sm font-bold text-[#1a5c38] dark:text-[#e8c668] uppercase tracking-wide">Settings</h1>
       </div>
 
       {/* Language */}
@@ -98,7 +98,7 @@ export default function SettingsPage() {
       }>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-800">Response Language</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Response Language</p>
             <p className="text-xs text-gray-400 mt-0.5">
               {language === 'ur' ? 'اردو فعال ہے — Urdu active' : 'English active'}
             </p>
@@ -172,7 +172,7 @@ export default function SettingsPage() {
             {sourceBooks.map(book => (
               <div key={book} className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-gray-50 transition-colors">
                 <span className="text-base">{book.toLowerCase().includes('quran') ? '📖' : '📜'}</span>
-                <span className="text-sm text-gray-700">{book}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{book}</span>
                 <span className="ml-auto text-[10px] text-emerald-600 font-semibold bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">Active</span>
               </div>
             ))}
@@ -222,7 +222,7 @@ export default function SettingsPage() {
             </svg>
           </div>
           <div>
-            <p className="font-bold text-[#1a5c38] text-sm mb-1">Quran & Hadith Assistant</p>
+            <p className="font-bold text-[#1a5c38] dark:text-[#e8c668] text-sm mb-1">Quran & Hadith Assistant</p>
             <p className="text-xs text-gray-500 leading-relaxed mb-3">
               All answers are sourced exclusively from authenticated Islamic texts. No external internet content is used.
             </p>

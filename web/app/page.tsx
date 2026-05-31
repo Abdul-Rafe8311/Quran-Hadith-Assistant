@@ -101,7 +101,7 @@ export default function HomePage() {
           <div className="divider-ornament mb-5">
             <div className="flex items-center gap-2">
               <span className="text-[#c9a84c] text-xs">✦</span>
-              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Explore Topics</span>
+              <span className="text-xs font-bold text-[#1a5c38] dark:text-[#e8c668] uppercase tracking-widest">Explore Topics</span>
               <span className="text-[#c9a84c] text-xs">✦</span>
             </div>
           </div>
@@ -113,14 +113,14 @@ export default function HomePage() {
                   key={topic.id}
                   href={`/chat?prefill=${encodeURIComponent(topic.query)}`}
                   style={{ animationDelay: `${i * 55}ms` }}
-                  className={`fade-in group relative bg-gradient-to-br ${c.bg} border ${c.border} rounded-2xl p-5 text-center hover:-translate-y-1.5 transition-all duration-300 overflow-hidden shadow-soft hover:shadow-lg`}
+                  className={`fade-in group relative bg-gradient-to-br ${c.bg} dark:from-[#13211a] dark:to-[#16241c] border ${c.border} dark:border-white/10 rounded-2xl p-5 text-center hover:-translate-y-1.5 transition-all duration-300 overflow-hidden shadow-soft hover:shadow-lg`}
                 >
                   <div className={`absolute -top-10 -right-10 w-24 h-24 rounded-full ${c.glow} blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   <div className="relative">
                     <div className={`w-12 h-12 mx-auto mb-3 rounded-2xl ${c.iconBg} flex items-center justify-center text-2xl group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 shadow-sm`}>
                       {topic.emoji}
                     </div>
-                    <div className={`text-xs font-bold ${c.text} tracking-wide`}>{topic.label}</div>
+                    <div className={`text-xs font-bold ${c.text} dark:text-gray-200 tracking-wide`}>{topic.label}</div>
                   </div>
                 </Link>
               );
@@ -133,7 +133,7 @@ export default function HomePage() {
           <div className="divider-ornament mb-7">
             <div className="flex items-center gap-2">
               <span className="text-[#c9a84c] text-xs">✦</span>
-              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">How It Works</span>
+              <span className="text-xs font-bold text-[#1a5c38] dark:text-[#e8c668] uppercase tracking-widest">How It Works</span>
               <span className="text-[#c9a84c] text-xs">✦</span>
             </div>
           </div>
@@ -187,31 +187,31 @@ export default function HomePage() {
                   <div className={`relative w-20 h-20 rounded-full ${s.color} flex items-center justify-center shadow-lg mb-4`}>
                     <span className={s.iconColor || 'text-white'}>{s.icon}</span>
                     {/* Step number badge */}
-                    <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border-2 border-[#c9a84c] text-[#0d3d25] text-[10px] font-extrabold flex items-center justify-center shadow-sm">
+                    <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white dark:bg-[#13211a] border-2 border-[#c9a84c] text-[#0d3d25] dark:text-[#f0d080] text-[10px] font-extrabold flex items-center justify-center shadow-sm">
                       {s.step}
                     </span>
                   </div>
                   {/* Badge */}
-                  <span className="text-[10px] font-bold bg-[#c9a84c]/15 border border-[#c9a84c]/30 text-[#1a5c38] px-2.5 py-0.5 rounded-full mb-2 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold bg-[#c9a84c]/15 border border-[#c9a84c]/30 text-[#1a5c38] dark:text-[#e8c668] px-2.5 py-0.5 rounded-full mb-2 uppercase tracking-wider">
                     {s.badge}
                   </span>
-                  <h3 className="text-sm font-bold text-[#0d3d25] mb-1.5">{s.title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed max-w-[200px]">{s.desc}</p>
+                  <h3 className="text-sm font-bold text-[#0d3d25] dark:text-gray-100 mb-1.5">{s.title}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-[200px]">{s.desc}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Highlight box */}
-          <div className="mt-6 bg-gradient-to-r from-[#0d3d25]/5 to-[#c9a84c]/10 border border-[#c9a84c]/25 rounded-2xl p-4 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#0d3d25] flex items-center justify-center shrink-0 mt-0.5">
+          <div className="mt-6 bg-gradient-to-r from-[#0d3d25]/5 to-[#c9a84c]/10 dark:from-[#13211a] dark:to-[#1a2b22] border border-[#c9a84c]/25 dark:border-[#c9a84c]/20 rounded-2xl p-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#0d3d25] dark:bg-[#c9a84c]/20 flex items-center justify-center shrink-0 mt-0.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.5">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-[#0d3d25] mb-0.5">100% grounded in authentic sources</p>
-              <p className="text-xs text-gray-500 leading-relaxed">
+              <p className="text-sm font-bold text-[#0d3d25] dark:text-gray-100 mb-0.5">100% grounded in authentic sources</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                 Every answer comes directly from the Quran and Sahih Hadith stored in our database — the AI never makes things up or uses outside internet sources.
               </p>
             </div>
@@ -223,7 +223,7 @@ export default function HomePage() {
           <div className="divider-ornament mb-6">
             <div className="flex items-center gap-2">
               <span className="text-[#c9a84c] text-xs">✦</span>
-              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Our Sources</span>
+              <span className="text-xs font-bold text-[#1a5c38] dark:text-[#e8c668] uppercase tracking-widest">Our Sources</span>
               <span className="text-[#c9a84c] text-xs">✦</span>
             </div>
           </div>
@@ -241,7 +241,7 @@ export default function HomePage() {
                 icon: '📜',
                 title: 'Sahih Bukhari',
                 desc: 'Authentic hadith collection from all 9 volumes',
-                tag: '7,563 hadiths',
+                tag: '4,781 hadiths',
                 color: 'from-amber-500/10 to-amber-600/5',
                 border: 'border-amber-200/50',
               },
@@ -254,22 +254,22 @@ export default function HomePage() {
                 border: 'border-blue-200/50',
               },
             ].map(card => (
-              <div key={card.title} className={`bg-gradient-to-br ${card.color} border ${card.border} backdrop-blur rounded-2xl p-5`}>
+              <div key={card.title} className={`bg-gradient-to-br ${card.color} dark:from-[#13211a] dark:to-[#16241c] border ${card.border} dark:border-white/10 backdrop-blur rounded-2xl p-5`}>
                 <div className="flex items-start justify-between mb-3">
                   <span className="text-2xl">{card.icon}</span>
-                  <span className="text-[10px] font-bold bg-white/60 border border-[#c9a84c]/20 text-[#1a5c38] px-2 py-0.5 rounded-full">{card.tag}</span>
+                  <span className="text-[10px] font-bold bg-white/60 dark:bg-white/10 border border-[#c9a84c]/20 text-[#1a5c38] dark:text-[#e8c668] px-2 py-0.5 rounded-full">{card.tag}</span>
                 </div>
-                <p className="font-bold text-[#1a5c38] text-sm mb-1.5">{card.title}</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{card.desc}</p>
+                <p className="font-bold text-[#1a5c38] dark:text-gray-100 text-sm mb-1.5">{card.title}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{card.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Disclaimer */}
-        <div className="flex items-center gap-3 bg-amber-50/80 border border-amber-200/60 rounded-2xl p-4">
+        <div className="flex items-center gap-3 bg-amber-50/80 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40 rounded-2xl p-4">
           <span className="text-amber-500 text-lg shrink-0">⚠️</span>
-          <p className="text-xs text-amber-700 leading-relaxed">
+          <p className="text-xs text-amber-700 dark:text-amber-300/90 leading-relaxed">
             <span className="font-bold">Note:</span> This is not a fatwa service. For religious rulings and legal opinions, please consult a qualified Islamic scholar (Mufti).
           </p>
         </div>

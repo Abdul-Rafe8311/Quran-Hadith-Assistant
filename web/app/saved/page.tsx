@@ -62,13 +62,13 @@ export default function SavedPage() {
   if (saved.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 text-center p-8">
-        <div className="w-20 h-20 rounded-full bg-[#fdf6e3] border border-[#c9a84c]/30 flex items-center justify-center mb-5 shadow-sm">
+        <div className="w-20 h-20 rounded-full bg-[#fdf6e3] dark:bg-[#13211a] border border-[#c9a84c]/30 flex items-center justify-center mb-5 shadow-sm">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1.5">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
         </div>
-        <p className="text-gray-700 font-bold text-lg mb-1.5">No saved answers yet</p>
-        <p className="text-gray-400 text-sm max-w-xs">Tap the Save button on any answer to bookmark it for later</p>
+        <p className="text-gray-700 dark:text-gray-200 font-bold text-lg mb-1.5">No saved answers yet</p>
+        <p className="text-gray-400 dark:text-gray-500 text-sm max-w-xs">Tap the Save button on any answer to bookmark it for later</p>
       </div>
     );
   }
@@ -81,8 +81,8 @@ export default function SavedPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a5c38" strokeWidth="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
-          <h1 className="text-sm font-bold text-[#1a5c38] uppercase tracking-wide">Saved Answers</h1>
-          <span className="bg-[#1a5c38]/10 text-[#1a5c38] text-xs font-bold px-2 py-0.5 rounded-full">{saved.length}</span>
+          <h1 className="text-sm font-bold text-[#1a5c38] dark:text-[#e8c668] uppercase tracking-wide">Saved Answers</h1>
+          <span className="bg-[#1a5c38]/10 dark:bg-white/10 text-[#1a5c38] dark:text-[#e8c668] text-xs font-bold px-2 py-0.5 rounded-full">{saved.length}</span>
         </div>
         <button
           onClick={loadSaved}
@@ -105,14 +105,14 @@ export default function SavedPage() {
           <div
             key={item.id}
             style={{ animationDelay: `${idx * 40}ms` }}
-            className="fade-in bg-white rounded-2xl overflow-hidden border border-[#c9a84c]/15 shadow-sm hover:shadow-md hover:border-[#c9a84c]/30 transition-all duration-200 cursor-pointer"
+            className="fade-in bg-white dark:bg-[#13211a] rounded-2xl overflow-hidden border border-[#c9a84c]/15 dark:border-white/10 shadow-sm hover:shadow-md hover:border-[#c9a84c]/30 transition-all duration-200 cursor-pointer"
             onClick={() => setExpanded(isExpanded ? null : item.id)}
           >
             {/* Top accent bar */}
             <div className="h-0.5 bg-gradient-to-r from-[#c9a84c]/40 via-[#c9a84c]/70 to-[#c9a84c]/40" />
             <div className="p-5">
               <div className="flex items-start justify-between gap-3 mb-2.5">
-                <p className={`text-sm font-semibold text-[#1a5c38] flex-1 leading-snug ${!isExpanded ? 'line-clamp-2' : ''}`}>
+                <p className={`text-sm font-semibold text-[#1a5c38] dark:text-gray-100 flex-1 leading-snug ${!isExpanded ? 'line-clamp-2' : ''}`}>
                   {item.question}
                 </p>
                 <div className="flex gap-1.5 shrink-0">
@@ -128,7 +128,7 @@ export default function SavedPage() {
                   )}
                 </div>
               </div>
-              <p className={`text-xs text-gray-500 leading-relaxed mb-3 ${!isExpanded ? 'line-clamp-3' : ''}`}>
+              <p className={`text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-3 ${!isExpanded ? 'line-clamp-3' : ''}`}>
                 {item.answer}
               </p>
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">

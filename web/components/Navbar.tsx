@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
 
 const links = [
   { href: '/', label: 'Home', icon: (
@@ -66,6 +67,8 @@ export default function Navbar() {
               </Link>
             );
           })}
+          <div className="w-px h-5 bg-white/10 mx-1" />
+          <ThemeToggle />
         </div>
       </div>
     </nav>
