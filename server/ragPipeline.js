@@ -226,9 +226,8 @@ function detectLanguage(text) {
 }
 
 function buildPrompt(question, context, detectedLang, responseSize) {
-  const langRule = detectedLang === 'ur'
-    ? 'The user wrote in Urdu. Respond fully in Urdu.'
-    : 'Respond in simple, easy English that a teenager can understand. No difficult words.';
+  // English-only responses (even if the question is in another language)
+  const langRule = 'ALWAYS respond in simple, easy English that a teenager can understand. No difficult words. Even if the question is written in Urdu or another language, your answer must be in English.';
 
   const persona = `You are "Ilm" — a friendly Islamic guide made for teenagers and young people who have questions about Islam. You speak like a knowledgeable older sibling: warm, clear, never judgmental, and always encouraging. Your job is to answer their questions honestly using the Quran and authentic Hadith, and explain things in a way that connects to real teenage life.`;
 

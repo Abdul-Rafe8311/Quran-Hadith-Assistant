@@ -20,7 +20,6 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
 }
 
 export default function SettingsPage() {
-  const [language, setLanguage] = useState<'en' | 'ur'>('en');
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [sourceBooks, setSourceBooks] = useState<string[]>([]);
   const [booksLoading, setBooksLoading] = useState(true);
@@ -29,7 +28,6 @@ export default function SettingsPage() {
     const stored = localStorage.getItem('settings');
     if (stored) {
       const s = JSON.parse(stored);
-      setLanguage(s.language || 'en');
       setFontSize(s.fontSize || 'medium');
     }
     loadSourceBooks();
@@ -55,8 +53,8 @@ export default function SettingsPage() {
     setBooksLoading(false);
   }
 
-  function saveSettings(updates: Partial<{ language: 'en' | 'ur'; fontSize: 'small' | 'medium' | 'large' }>) {
-    const current = { language, fontSize, ...updates };
+  function saveSettings(updates: Partial<{ fontSize: 'small' | 'medium' | 'large' }>) {
+    const current = { fontSize, ...updates };
     localStorage.setItem('settings', JSON.stringify(current));
   }
 
@@ -89,32 +87,6 @@ export default function SettingsPage() {
         <h1 className="text-sm font-bold text-[#1a5c38] dark:text-[#e8c668] uppercase tracking-wide">Settings</h1>
       </div>
 
-      {/* Language */}
-      <SectionCard title="Language" icon={
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-      }>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Response Language</p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {language === 'ur' ? 'اردو فعال ہے — Urdu active' : 'English active'}
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              const l = language === 'en' ? 'ur' : 'en';
-              setLanguage(l);
-              saveSettings({ language: l });
-            }}
-            className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${language === 'ur' ? 'bg-[#1a5c38]' : 'bg-gray-200'}`}
-          >
-            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${language === 'ur' ? 'translate-x-7' : 'translate-x-1'}`} />
-          </button>
-        </div>
-      </SectionCard>
 
       {/* Font size */}
       <SectionCard title="Text Size" icon={
