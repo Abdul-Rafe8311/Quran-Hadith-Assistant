@@ -214,11 +214,11 @@ function buildPrompt(question, context, detectedLang, responseSize) {
   const persona = `You are "Ilm" — a friendly Islamic guide made for teenagers and young people who have questions about Islam. You speak like a knowledgeable older sibling: warm, clear, never judgmental, and always encouraging. Your job is to answer their questions honestly using the Quran and authentic Hadith, and explain things in a way that connects to real teenage life.`;
 
   const sizeInstructions = {
-    small: `RESPONSE SIZE: SMALL — One source only (the single most relevant Quran verse OR Hadith), with 2-3 short commentary bullets. Keep it brief.`,
+    small: `RESPONSE SIZE: SMALL — The 1-2 most relevant Quran verses (and one Hadith only if clearly relevant), each with 2-3 short commentary bullets. Keep it brief.`,
 
-    medium: `RESPONSE SIZE: MEDIUM — One Quran verse and (if genuinely relevant) one Hadith, each with 3-4 simple commentary bullets.`,
+    medium: `RESPONSE SIZE: MEDIUM — Include ALL the relevant Quran verses on this topic (usually 3-4 different verses), each in its own [The Quran says] + [Commentary] block, plus 1-2 relevant Hadith. Many topics (like prayer/Namaz) have several verses — include them, not just one.`,
 
-    large: `RESPONSE SIZE: LARGE — One or two Quran verses and one or two relevant Hadith, each followed by 4-5 commentary bullets. You may add a short real-life connection for teenagers.`,
+    large: `RESPONSE SIZE: LARGE — Include MANY relevant Quran verses on this topic (5 or more when they exist), each in its own [The Quran says] + [Commentary] block, plus 2-3 relevant Hadith, and a short real-life connection for teenagers. Be thorough and cover the different verses about the topic.`,
   };
 
   return `${persona}
@@ -245,7 +245,7 @@ STYLE & FORMAT:
 13. ${langRule}
 14. Format your answer EXACTLY like the template below. Use the section headers in square brackets on their own line. For each evidence: put the reference on its own line, then the Arabic on its own line (Quran only), then the clean English translation in "quotes" on its own line. Then a [Commentary] section with simple bullet points (each starting with "- "). Finally end with ONE short, warm follow-up question on its own line inviting them to explore more.
 
-TEMPLATE (include [The Hadith says] only when you have a genuinely relevant, clean Hadith; omit it otherwise):
+TEMPLATE — REPEAT the [The Quran says] + [Commentary] pair for EACH relevant verse (don't stop at one!). Then optionally [The Hadith says] + [Commentary] for each relevant Hadith. Include [The Hadith says] only when you have a genuinely relevant, clean Hadith.
 
 [The Quran says]
 Surah <Name> (<chapter>:<verse>)
@@ -255,6 +255,14 @@ Surah <Name> (<chapter>:<verse>)
 [Commentary]
 - <simple point in plain words>
 - <another simple point>
+
+[The Quran says]
+Surah <Another Name> (<chapter>:<verse>)
+<Arabic verse text>
+"<clean English translation>"
+
+[Commentary]
+- <simple point>
 - <another simple point>
 
 [The Hadith says]
@@ -267,7 +275,7 @@ Surah <Name> (<chapter>:<verse>)
 
 <One short friendly follow-up question, e.g. "Would you like to explore how worship is practiced in Islam?">
 
-Do NOT use any other section headers (no [Direct Answer], no [Explanation & Tafsir]). Keep bullets short and easy.
+Do NOT use any other section headers (no [Direct Answer], no [Explanation & Tafsir]). Keep bullets short and easy. Cover MULTIPLE verses when the topic has them.
 
 15. IMPORTANT — after your answer, you MUST add this exact block. Give a short, simple-English "explanation" (1-2 easy sentences a teenager can understand) for EVERY numbered source listed under "Retrieved sources" below — both Quran verses AND Hadith, whether or not you used them in your answer. Key each explanation by its source number [i]. Explain in plain words what that verse or hadith means.
 <NOTES>
@@ -306,8 +314,8 @@ async function runRAG(question, language, responseSize = 'medium') {
 
   // Build prompt using size-aware teenager persona
   const prompt = buildPrompt(question, context, detectedLang, responseSize);
-  // Higher limits because NOTES explains every retrieved source
-  const maxTokens = responseSize === 'small' ? 1500 : responseSize === 'large' ? 4096 : 3000;
+  // Higher limits to fit multiple verses + NOTES for every retrieved source
+  const maxTokens = responseSize === 'small' ? 2000 : responseSize === 'large' ? 6000 : 4000;
 
   // Call Claude
   const message = await anthropic.messages.create({
