@@ -1,6 +1,19 @@
 import Link from 'next/link';
 import DailyAyah from '../components/DailyAyah';
+import NameOfAllah from '../components/NameOfAllah';
 import { TOPICS } from '../constants/topics';
+
+// Distinct soft color per topic card — keeps the page lively & attractive
+const TOPIC_COLORS = [
+  { bg: 'from-emerald-50 to-emerald-100/40', border: 'border-emerald-200/70', iconBg: 'bg-emerald-100', text: 'text-emerald-800', glow: 'bg-emerald-300/40' },
+  { bg: 'from-amber-50 to-amber-100/40',     border: 'border-amber-200/70',   iconBg: 'bg-amber-100',   text: 'text-amber-800',   glow: 'bg-amber-300/40' },
+  { bg: 'from-rose-50 to-rose-100/40',       border: 'border-rose-200/70',    iconBg: 'bg-rose-100',    text: 'text-rose-800',    glow: 'bg-rose-300/40' },
+  { bg: 'from-violet-50 to-violet-100/40',   border: 'border-violet-200/70',  iconBg: 'bg-violet-100',  text: 'text-violet-800',  glow: 'bg-violet-300/40' },
+  { bg: 'from-sky-50 to-sky-100/40',         border: 'border-sky-200/70',     iconBg: 'bg-sky-100',     text: 'text-sky-800',     glow: 'bg-sky-300/40' },
+  { bg: 'from-pink-50 to-pink-100/40',       border: 'border-pink-200/70',    iconBg: 'bg-pink-100',    text: 'text-pink-800',    glow: 'bg-pink-300/40' },
+  { bg: 'from-teal-50 to-teal-100/40',       border: 'border-teal-200/70',    iconBg: 'bg-teal-100',    text: 'text-teal-800',    glow: 'bg-teal-300/40' },
+  { bg: 'from-indigo-50 to-indigo-100/40',   border: 'border-indigo-200/70',  iconBg: 'bg-indigo-100',  text: 'text-indigo-800',  glow: 'bg-indigo-300/40' },
+];
 
 export default function HomePage() {
   return (
@@ -34,14 +47,13 @@ export default function HomePage() {
           </div>
 
           {/* Bismillah */}
-          <p className="arabic text-5xl sm:text-6xl text-[#f0d080] mb-5 leading-loose drop-shadow-lg">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
+          <p className="arabic text-3xl sm:text-4xl text-[#f0d080] mb-4 leading-loose drop-shadow-md">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
 
-          <h1 className="display text-white text-5xl sm:text-6xl font-bold mb-4 leading-[1.05]">
-            Quran &amp; Hadith<br />
-            <span className="gradient-text">Assistant</span>
+          <h1 className="text-white text-2xl sm:text-3xl font-extrabold mb-2.5 tracking-tight leading-tight">
+            Quran &amp; Hadith <span className="gradient-text">Assistant</span>
           </h1>
-          <p className="text-green-100/55 text-sm sm:text-base mb-10 max-w-md mx-auto leading-relaxed">
-            Honest answers to your questions about Islam — grounded in the Quran and authentic Hadith, explained simply.
+          <p className="text-green-100/55 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+            Honest answers about Islam — grounded in the Quran and authentic Hadith, explained simply.
           </p>
 
           {/* CTA */}
@@ -59,17 +71,17 @@ export default function HomePage() {
           </Link>
 
           {/* Stats row */}
-          <div className="flex items-center justify-center gap-6 sm:gap-10 mt-14 pt-10 border-t border-white/10">
+          <div className="flex items-center justify-center gap-5 sm:gap-8 mt-10 pt-8 border-t border-white/10">
             {[
               { num: '6,236', label: 'Quran Verses' },
               { num: '4,781', label: 'Sahih Hadiths' },
               { num: '2', label: 'Languages' },
             ].map((s, i) => (
-              <div key={s.label} className="flex items-center gap-6 sm:gap-10">
-                {i > 0 && <div className="w-px h-8 bg-white/10" />}
+              <div key={s.label} className="flex items-center gap-5 sm:gap-8">
+                {i > 0 && <div className="w-px h-7 bg-white/10" />}
                 <div className="text-center">
-                  <p className="display text-[#f0d080] font-bold text-2xl sm:text-3xl">{s.num}</p>
-                  <p className="text-green-100/45 text-[11px] mt-0.5 tracking-wide">{s.label}</p>
+                  <p className="text-[#f0d080] font-bold text-lg sm:text-xl">{s.num}</p>
+                  <p className="text-green-100/45 text-[10px] mt-0.5 tracking-wide">{s.label}</p>
                 </div>
               </div>
             ))}
@@ -78,31 +90,41 @@ export default function HomePage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* Daily Ayah */}
-        <DailyAyah />
+        {/* Daily Ayah + Name of Allah */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DailyAyah />
+          <NameOfAllah />
+        </div>
 
         {/* Topics */}
         <div>
-          <div className="divider-ornament mb-6">
+          <div className="divider-ornament mb-5">
             <div className="flex items-center gap-2">
-              <span className="text-[#c9a84c]">✦</span>
-              <span className="display text-lg font-semibold text-[#0d3d25] tracking-wide">Explore Topics</span>
-              <span className="text-[#c9a84c]">✦</span>
+              <span className="text-[#c9a84c] text-xs">✦</span>
+              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Explore Topics</span>
+              <span className="text-[#c9a84c] text-xs">✦</span>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-            {TOPICS.map((topic, i) => (
-              <Link
-                key={topic.id}
-                href={`/chat?prefill=${encodeURIComponent(topic.query)}`}
-                style={{ animationDelay: `${i * 55}ms` }}
-                className="fade-in group relative bg-gradient-to-br from-white to-[#fdf6e3]/60 border border-[#c9a84c]/20 rounded-2xl p-5 text-center hover:border-[#c9a84c]/60 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden shadow-soft hover:shadow-gold"
-              >
-                <div className="absolute -top-8 -right-8 w-20 h-20 rounded-full bg-[#c9a84c]/0 group-hover:bg-[#c9a84c]/10 blur-2xl transition-all duration-500" />
-                <div className="relative text-4xl mb-2.5 group-hover:scale-115 group-hover:-rotate-6 transition-transform duration-300 inline-block">{topic.emoji}</div>
-                <div className="relative text-xs font-bold text-[#1a5c38] tracking-wide">{topic.label}</div>
-              </Link>
-            ))}
+            {TOPICS.map((topic, i) => {
+              const c = TOPIC_COLORS[i % TOPIC_COLORS.length];
+              return (
+                <Link
+                  key={topic.id}
+                  href={`/chat?prefill=${encodeURIComponent(topic.query)}`}
+                  style={{ animationDelay: `${i * 55}ms` }}
+                  className={`fade-in group relative bg-gradient-to-br ${c.bg} border ${c.border} rounded-2xl p-5 text-center hover:-translate-y-1.5 transition-all duration-300 overflow-hidden shadow-soft hover:shadow-lg`}
+                >
+                  <div className={`absolute -top-10 -right-10 w-24 h-24 rounded-full ${c.glow} blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  <div className="relative">
+                    <div className={`w-12 h-12 mx-auto mb-3 rounded-2xl ${c.iconBg} flex items-center justify-center text-2xl group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300 shadow-sm`}>
+                      {topic.emoji}
+                    </div>
+                    <div className={`text-xs font-bold ${c.text} tracking-wide`}>{topic.label}</div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
 
@@ -110,9 +132,9 @@ export default function HomePage() {
         <div>
           <div className="divider-ornament mb-7">
             <div className="flex items-center gap-2">
-              <span className="text-[#c9a84c]">✦</span>
-              <span className="display text-lg font-semibold text-[#0d3d25] tracking-wide">How It Works</span>
-              <span className="text-[#c9a84c]">✦</span>
+              <span className="text-[#c9a84c] text-xs">✦</span>
+              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">How It Works</span>
+              <span className="text-[#c9a84c] text-xs">✦</span>
             </div>
           </div>
 
@@ -200,9 +222,9 @@ export default function HomePage() {
         <div>
           <div className="divider-ornament mb-6">
             <div className="flex items-center gap-2">
-              <span className="text-[#c9a84c]">✦</span>
-              <span className="display text-lg font-semibold text-[#0d3d25] tracking-wide">Our Sources</span>
-              <span className="text-[#c9a84c]">✦</span>
+              <span className="text-[#c9a84c] text-xs">✦</span>
+              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Our Sources</span>
+              <span className="text-[#c9a84c] text-xs">✦</span>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

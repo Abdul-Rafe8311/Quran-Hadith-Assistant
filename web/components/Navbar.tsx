@@ -42,7 +42,7 @@ export default function Navbar() {
             </svg>
           </div>
           <div>
-            <p className="display text-white font-semibold text-base leading-tight tracking-wide">Islamic Assistant</p>
+            <p className="text-white font-bold text-sm leading-tight tracking-tight">Islamic Assistant</p>
             <p className="gradient-text text-[10px] leading-tight font-semibold tracking-[0.15em] uppercase">Quran &amp; Hadith</p>
           </div>
         </Link>

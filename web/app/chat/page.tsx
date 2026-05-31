@@ -139,8 +139,8 @@ function ChatContent() {
               <div className="absolute inset-0 rounded-3xl border-2 border-[#c9a84c]/25 animate-ping" style={{ animationDuration: '3s' }} />
             </div>
 
-            <p className="arabic text-4xl text-[#1a5c38] mb-3 leading-loose">سُبْحَانَ اللّٰه</p>
-            <h2 className="display text-2xl font-semibold text-[#0d3d25] mb-1.5">Got a question about Islam?</h2>
+            <p className="arabic text-3xl text-[#1a5c38] mb-3 leading-loose">سُبْحَانَ اللّٰه</p>
+            <h2 className="text-base font-bold text-[#0d3d25] mb-1.5">Got a question about Islam?</h2>
             <p className="text-gray-500 text-sm mb-1">Ask anything — in English or <span className="font-medium text-[#1a5c38]">اردو میں</span></p>
             <p className="text-xs text-[#c9a84c] font-medium mb-8">From Quran &amp; authentic Hadith, explained simply</p>
 
