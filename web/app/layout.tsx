@@ -5,6 +5,11 @@ import Navbar from "../components/Navbar";
 export const metadata: Metadata = {
   title: "Quran & Hadith Assistant",
   description: "Islamic Q&A grounded in authentic sources",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/apple-icon.svg",
+  },
 };
 
 // Runs before paint to apply the saved theme — prevents a flash of the wrong theme

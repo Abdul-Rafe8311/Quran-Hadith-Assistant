@@ -154,51 +154,32 @@ function buildContext(sources) {
     .join('\n\n');
 }
 
-function parseAnswer(rawAnswer, sources, quranRefs = []) {
-  // Map Claude's per-verse data by "chapter:verse" (DB now has exact refs) and
-  // by sequential order as a fallback.
-  const refByCV = {};
-  for (const r of quranRefs) {
-    if (r?.chapter && r?.verse) refByCV[`${r.chapter}:${r.verse}`] = r;
-  }
-  const refByIdx = {};
-  for (const r of quranRefs) { if (r?.index) refByIdx[r.index] = r; }
-  const refsQueue = [...quranRefs];
+function parseAnswer(rawAnswer, sources, explByIdx = {}) {
+  // Tag every source with its 1-based context index (matches buildContext order)
+  // BEFORE filtering, so Claude's per-source explanations line up.
+  const tagged = sources.map((s, i) => ({ ...s, _ctxIdx: i + 1 }));
 
   const seenContent = new Set();
 
-  const quran_sources = sources
+  const quran_sources = tagged
     .filter(s => s.source_type === 'quran')
     .filter(s => {
-      // Deduplicate by first 60 chars of content
       const key = s.content.substring(0, 60).trim();
       if (seenContent.has(key)) return false;
       seenContent.add(key);
       return true;
     })
-    .map((s, i) => {
-      const dbName    = s.metadata?.surah_name   || '';
-      const dbChapter = s.metadata?.surah_number || 0;
-      const dbVerse   = s.metadata?.ayah_number  || 0;
-
-      // Match Claude's explanation: first by exact chapter:verse, then index, then order
-      let ref = (dbChapter && dbVerse && refByCV[`${dbChapter}:${dbVerse}`])
-        || refByIdx[i + 1]
-        || null;
-      if (!ref && refsQueue.length > 0) ref = refsQueue.shift();
-
-      return {
-        surah_name:  dbName    || ref?.surah_name || '',
-        chapter:     dbChapter || ref?.chapter    || 0,
-        verse:       dbVerse   || ref?.verse      || 0,
-        text:        stripArtifacts(s.content),
-        arabic_text: s.metadata?.arabic_text || '',
-        explanation: ref?.explanation || '',
-      };
-    });
+    .map(s => ({
+      surah_name:  s.metadata?.surah_name   || '',
+      chapter:     s.metadata?.surah_number || 0,
+      verse:       s.metadata?.ayah_number  || 0,
+      text:        stripArtifacts(s.content),
+      arabic_text: s.metadata?.arabic_text || '',
+      explanation: explByIdx[s._ctxIdx] || '',
+    }));
 
   const seenHadith = new Set();
-  const hadith_sources = sources
+  const hadith_sources = tagged
     .filter(s => s.source_type === 'hadith')
     .filter(s => {
       // Dedup by hadith number when present, otherwise by content —
@@ -212,9 +193,10 @@ function parseAnswer(rawAnswer, sources, quranRefs = []) {
       return true;
     })
     .map(s => ({
-      book:   s.metadata?.book          || '',
-      number: s.metadata?.hadith_number || 0,
-      text:   stripArtifacts(s.content),
+      book:        s.metadata?.book          || '',
+      number:      s.metadata?.hadith_number || 0,
+      text:        stripArtifacts(s.content),
+      explanation: explByIdx[s._ctxIdx] || '',
     }));
 
   return { quran_sources, hadith_sources };
@@ -287,11 +269,11 @@ Surah <Name> (<chapter>:<verse>)
 
 Do NOT use any other section headers (no [Direct Answer], no [Explanation & Tafsir]). Keep bullets short and easy.
 
-15. IMPORTANT — after your answer, you MUST add this exact block for every Quran source you actually USED in your answer. For each one give: its Surah name, chapter number, verse number, AND a short, simple-English "explanation" (1-2 easy sentences a teenager can understand — what the verse is teaching and why it matters). Each source already shows its reference in the format "Surah Name (chapter:verse)" — use those exact numbers.
-<QURAN_REFS>
-[{"chapter":2,"verse":255,"surah_name":"Al-Baqarah","explanation":"This verse, called Ayatul Kursi, describes Allah's greatness and that He never gets tired of protecting everything. It reminds us how powerful and caring Allah is."}]
-</QURAN_REFS>
-Include ALL Quran sources. Keep each explanation simple and warm. Use standard English transliterations of Surah names.
+15. IMPORTANT — after your answer, you MUST add this exact block. Give a short, simple-English "explanation" (1-2 easy sentences a teenager can understand) for EVERY numbered source listed under "Retrieved sources" below — both Quran verses AND Hadith, whether or not you used them in your answer. Key each explanation by its source number [i]. Explain in plain words what that verse or hadith means.
+<NOTES>
+[{"i":1,"explanation":"This verse reminds us that Allah is always watching over everything and never gets tired."},{"i":2,"explanation":"This hadith teaches that a person's deeds are judged by their intention."}]
+</NOTES>
+Include an entry for every numbered source. Keep each explanation simple and warm.
 
 Retrieved sources (Quran + Hadith + Tafsir):
 ${context}
@@ -324,7 +306,8 @@ async function runRAG(question, language, responseSize = 'medium') {
 
   // Build prompt using size-aware teenager persona
   const prompt = buildPrompt(question, context, detectedLang, responseSize);
-  const maxTokens = responseSize === 'small' ? 900 : responseSize === 'large' ? 3500 : 2200;
+  // Higher limits because NOTES explains every retrieved source
+  const maxTokens = responseSize === 'small' ? 1500 : responseSize === 'large' ? 4096 : 3000;
 
   // Call Claude
   const message = await anthropic.messages.create({
@@ -334,46 +317,30 @@ async function runRAG(question, language, responseSize = 'medium') {
   });
   const rawAnswer = message.content[0].text;
 
-  // Strip the QURAN_REFS block from displayed answer
-  const answer = rawAnswer.replace(/<QURAN_REFS>[\s\S]*?<\/QURAN_REFS>/g, '').trim();
+  // Strip the NOTES block from the displayed answer
+  const answer = rawAnswer.replace(/<NOTES>[\s\S]*?<\/NOTES>/g, '').trim();
 
-  // --- Method 1: parse structured <QURAN_REFS> JSON block ---
-  let quranRefs = [];
-  const refsMatch = rawAnswer.match(/<QURAN_REFS>([\s\S]*?)<\/QURAN_REFS>/);
-  if (refsMatch) {
+  // Parse <NOTES> — a simple-words explanation for every numbered source [i]
+  const explByIdx = {};
+  const notesMatch = rawAnswer.match(/<NOTES>([\s\S]*?)<\/NOTES>/);
+  if (notesMatch) {
+    let notes = [];
     try {
-      quranRefs = JSON.parse(refsMatch[1].trim());
+      notes = JSON.parse(notesMatch[1].trim());
     } catch {
-      // Malformed JSON — try extracting individual objects
       const objRe = /\{[^{}]+\}/g;
       let m;
-      while ((m = objRe.exec(refsMatch[1])) !== null) {
-        try {
-          const o = JSON.parse(m[0]);
-          if (o.chapter >= 1 && o.chapter <= 114) quranRefs.push(o);
-        } catch {}
+      while ((m = objRe.exec(notesMatch[1])) !== null) {
+        try { notes.push(JSON.parse(m[0])); } catch {}
       }
+    }
+    for (const n of notes) {
+      const i = n.i ?? n.index;
+      if (i && n.explanation) explByIdx[i] = String(n.explanation);
     }
   }
 
-  // --- Method 2: parse citations Claude naturally writes in the answer ---
-  // e.g. "Surah Al-Baqarah (2:43)" or "Al-Maidah 5:3" — used when block is absent/empty
-  if (quranRefs.length === 0) {
-    const citRe = /(?:Surah\s+)?([A-Z][A-Za-z'-]+(?:\s+[A-Za-z'-]+){0,2})\s*\(?\s*(\d{1,3})\s*:\s*(\d{1,3})\s*\)?/g;
-    const seen = new Set();
-    let cm;
-    while ((cm = citRe.exec(rawAnswer)) !== null) {
-      const chapter = parseInt(cm[2], 10);
-      const verse   = parseInt(cm[3], 10);
-      const key = `${chapter}:${verse}`;
-      if (chapter >= 1 && chapter <= 114 && !seen.has(key)) {
-        seen.add(key);
-        quranRefs.push({ surah_name: cm[1].trim(), chapter, verse });
-      }
-    }
-  }
-
-  const { quran_sources, hadith_sources } = parseAnswer(answer, sources, quranRefs);
+  const { quran_sources, hadith_sources } = parseAnswer(answer, sources, explByIdx);
 
   return {
     answer,

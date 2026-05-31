@@ -12,6 +12,7 @@ export interface GeminiResponse {
     book: string;
     number: string | number;
     text: string;
+    explanation?: string;
   }[];
 }
 

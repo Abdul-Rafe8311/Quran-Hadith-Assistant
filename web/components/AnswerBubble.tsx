@@ -372,6 +372,20 @@ function HadithCard({ src, index }: { src: HadithSource; index: number }) {
             <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Hadith Text</p>
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{text || 'Hadith text unavailable.'}</p>
           </div>
+
+          {/* ── Simple explanation ── */}
+          {src.explanation && (
+            <div className="p-4 bg-amber-50/40 dark:bg-amber-900/15 border-t border-amber-100/60 dark:border-white/5">
+              <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9.663 17h4.673M12 3v1M12 17v4M5 12H4M20 12h-1M6.34 6.34l-.7-.7M18.36 6.34l.7-.7"/>
+                  <circle cx="12" cy="12" r="4"/>
+                </svg>
+                In Simple Words
+              </p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{src.explanation}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
