@@ -28,9 +28,9 @@ const links = [
 export default function Navbar() {
   const pathname = usePathname();
   return (
-    <nav className="sticky top-0 z-40 bg-[#0d3d25] border-b border-[#c9a84c]/20 shadow-lg shadow-black/20">
+    <nav className="sticky top-0 z-40 glass-dark border-b border-[#c9a84c]/25 shadow-lg shadow-black/20">
       {/* Decorative top line */}
-      <div className="h-0.5 bg-gradient-to-r from-transparent via-[#c9a84c]/60 to-transparent" />
+      <div className="h-0.5 bg-gradient-to-r from-transparent via-[#c9a84c]/70 to-transparent" />
       <div className="max-w-5xl mx-auto flex items-center justify-between px-5 py-2.5">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -42,8 +42,8 @@ export default function Navbar() {
             </svg>
           </div>
           <div>
-            <p className="text-white font-bold text-sm leading-tight tracking-tight">Islamic Assistant</p>
-            <p className="gradient-text text-[10px] leading-tight font-medium tracking-wider">Quran & Hadith</p>
+            <p className="display text-white font-semibold text-base leading-tight tracking-wide">Islamic Assistant</p>
+            <p className="gradient-text text-[10px] leading-tight font-semibold tracking-[0.15em] uppercase">Quran &amp; Hadith</p>
           </div>
         </Link>
 
@@ -55,13 +55,13 @@ export default function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
                   active
-                    ? 'bg-[#c9a84c] text-[#0d3d25] shadow-sm shadow-[#c9a84c]/30'
+                    ? 'bg-gradient-to-r from-[#c9a84c] to-[#e8c05a] text-[#0a2e1c] shadow-gold'
                     : 'text-green-100/70 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <span className={active ? 'text-[#0d3d25]' : 'text-current opacity-70'}>{l.icon}</span>
+                <span className={active ? 'text-[#0a2e1c]' : 'text-current opacity-70'}>{l.icon}</span>
                 {l.label}
               </Link>
             );

@@ -6,39 +6,48 @@ export default function HomePage() {
   return (
     <div className="min-h-screen pattern-bg">
       {/* Hero */}
-      <div className="relative bg-gradient-to-b from-[#071f12] via-[#0d3d25] to-[#1a5c38] overflow-hidden">
-        {/* Geometric background pattern */}
-        <div className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9a84c' stroke-width='0.5'%3E%3Cpolygon points='40,4 76,22 76,58 40,76 4,58 4,22'/%3E%3Cpolygon points='40,14 66,27 66,53 40,66 14,53 14,27'/%3E%3Cline x1='40' y1='4' x2='40' y2='14'/%3E%3Cline x1='76' y1='22' x2='66' y2='27'/%3E%3Cline x1='76' y1='58' x2='66' y2='53'/%3E%3Cline x1='40' y1='76' x2='40' y2='66'/%3E%3Cline x1='4' y1='58' x2='14' y2='53'/%3E%3Cline x1='4' y1='22' x2='14' y2='27'/%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundSize: '80px 80px',
-          }} />
+      <div className="relative bg-gradient-to-b from-[#06170d] via-[#0a2e1c] to-[#1a5c38] overflow-hidden">
+        {/* Geometric lattice pattern */}
+        <div className="absolute inset-0 geo-pattern opacity-[0.06]" />
         {/* Radial glow */}
-        <div className="absolute inset-0 bg-radial-gradient pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 30%, rgba(201,168,76,0.12) 0%, transparent 70%)' }} />
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 65% 55% at 50% 25%, rgba(201,168,76,0.16) 0%, transparent 70%)' }} />
+        {/* Soft vignette bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#1a5c38]/40 to-transparent pointer-events-none" />
 
-        <div className="relative max-w-4xl mx-auto px-6 py-16 text-center">
+        <div className="relative max-w-4xl mx-auto px-6 pt-14 pb-16 text-center">
+          {/* Decorative crescent emblem */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#c9a84c]/25 to-[#c9a84c]/5 border border-[#c9a84c]/40 flex items-center justify-center shadow-gold float">
+              <svg viewBox="0 0 44 44" width="30" height="30" fill="none">
+                <path d="M22 5C22 5 33 12 33 24 C33 29.5 28.5 34 22 34 C15.5 34 11 29.5 11 24 C11 18.5 15.5 14 22 14" stroke="#f0d080" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M30 9 L33 6 L40 13 L33 21 L30 18 L35 13 Z" fill="#f0d080" opacity="0.55"/>
+                <circle cx="36" cy="8" r="2.5" fill="#f0d080"/>
+              </svg>
+            </div>
+          </div>
+
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#c9a84c]/15 border border-[#c9a84c]/35 rounded-full px-5 py-1.5 mb-7 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 bg-[#c9a84c]/12 border border-[#c9a84c]/35 rounded-full px-5 py-1.5 mb-7 backdrop-blur-sm sheen">
             <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] animate-pulse" />
-            <span className="text-[#c9a84c] text-[11px] font-bold tracking-widest uppercase">Authentic Islamic Knowledge</span>
+            <span className="text-[#e8c668] text-[11px] font-bold tracking-[0.2em] uppercase">Authentic Islamic Knowledge</span>
           </div>
 
           {/* Bismillah */}
-          <p className="arabic text-5xl text-[#f0d080] mb-4 leading-loose drop-shadow-md">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
+          <p className="arabic text-5xl sm:text-6xl text-[#f0d080] mb-5 leading-loose drop-shadow-lg">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
 
-          <h1 className="text-white text-4xl font-extrabold mb-3 tracking-tight leading-tight">
-            Quran & Hadith<br />
+          <h1 className="display text-white text-5xl sm:text-6xl font-bold mb-4 leading-[1.05]">
+            Quran &amp; Hadith<br />
             <span className="gradient-text">Assistant</span>
           </h1>
-          <p className="text-green-200/60 text-sm mb-10 max-w-sm mx-auto leading-relaxed">
-            Answers grounded exclusively in authentic Islamic sources — Quran, Sahih Bukhari & more
+          <p className="text-green-100/55 text-sm sm:text-base mb-10 max-w-md mx-auto leading-relaxed">
+            Honest answers to your questions about Islam — grounded in the Quran and authentic Hadith, explained simply.
           </p>
 
           {/* CTA */}
           <Link
             href="/chat"
-            className="pulse-gold inline-flex items-center gap-3 bg-gradient-to-r from-[#c9a84c] to-[#e8c05a] text-[#0d3d25] font-bold px-9 py-3.5 rounded-full hover:from-[#e8c05a] hover:to-[#f0d080] transition-all duration-300 shadow-xl shadow-[#c9a84c]/25 hover:shadow-[#c9a84c]/40 hover:-translate-y-1 text-sm"
+            className="pulse-gold sheen inline-flex items-center gap-3 bg-gradient-to-r from-[#c9a84c] to-[#e8c05a] text-[#0a2e1c] font-bold px-9 py-4 rounded-full hover:from-[#e8c05a] hover:to-[#f0d080] transition-all duration-300 shadow-gold hover:-translate-y-1 text-sm"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -50,15 +59,18 @@ export default function HomePage() {
           </Link>
 
           {/* Stats row */}
-          <div className="flex items-center justify-center gap-8 mt-12 pt-10 border-t border-white/10">
+          <div className="flex items-center justify-center gap-6 sm:gap-10 mt-14 pt-10 border-t border-white/10">
             {[
-              { num: '6,236', label: 'Quranic Verses' },
-              { num: '7,563', label: 'Sahih Hadiths' },
+              { num: '6,236', label: 'Quran Verses' },
+              { num: '4,781', label: 'Sahih Hadiths' },
               { num: '2', label: 'Languages' },
-            ].map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-[#c9a84c] font-bold text-xl">{s.num}</p>
-                <p className="text-green-200/50 text-xs mt-0.5">{s.label}</p>
+            ].map((s, i) => (
+              <div key={s.label} className="flex items-center gap-6 sm:gap-10">
+                {i > 0 && <div className="w-px h-8 bg-white/10" />}
+                <div className="text-center">
+                  <p className="display text-[#f0d080] font-bold text-2xl sm:text-3xl">{s.num}</p>
+                  <p className="text-green-100/45 text-[11px] mt-0.5 tracking-wide">{s.label}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -71,26 +83,24 @@ export default function HomePage() {
 
         {/* Topics */}
         <div>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c9a84c]/30" />
+          <div className="divider-ornament mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#c9a84c]" />
-              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Explore Topics</span>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#c9a84c]" />
+              <span className="text-[#c9a84c]">✦</span>
+              <span className="display text-lg font-semibold text-[#0d3d25] tracking-wide">Explore Topics</span>
+              <span className="text-[#c9a84c]">✦</span>
             </div>
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c9a84c]/30" />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             {TOPICS.map((topic, i) => (
               <Link
                 key={topic.id}
                 href={`/chat?prefill=${encodeURIComponent(topic.query)}`}
                 style={{ animationDelay: `${i * 55}ms` }}
-                className="fade-in group relative bg-white/80 backdrop-blur border border-[#c9a84c]/15 rounded-2xl p-4 text-center hover:border-[#c9a84c]/50 hover:shadow-lg hover:shadow-[#c9a84c]/10 hover:-translate-y-1 transition-all duration-250 overflow-hidden"
+                className="fade-in group relative bg-gradient-to-br from-white to-[#fdf6e3]/60 border border-[#c9a84c]/20 rounded-2xl p-5 text-center hover:border-[#c9a84c]/60 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden shadow-soft hover:shadow-gold"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-[#c9a84c]/0 to-[#c9a84c]/0 group-hover:from-[#c9a84c]/5 group-hover:to-[#1a5c38]/5 transition-all duration-300 rounded-2xl" />
-                <div className="relative text-3xl mb-2.5 group-hover:scale-110 transition-transform duration-250">{topic.emoji}</div>
-                <div className="relative text-xs font-semibold text-[#1a5c38]">{topic.label}</div>
+                <div className="absolute -top-8 -right-8 w-20 h-20 rounded-full bg-[#c9a84c]/0 group-hover:bg-[#c9a84c]/10 blur-2xl transition-all duration-500" />
+                <div className="relative text-4xl mb-2.5 group-hover:scale-115 group-hover:-rotate-6 transition-transform duration-300 inline-block">{topic.emoji}</div>
+                <div className="relative text-xs font-bold text-[#1a5c38] tracking-wide">{topic.label}</div>
               </Link>
             ))}
           </div>
@@ -98,14 +108,12 @@ export default function HomePage() {
 
         {/* How It Works */}
         <div>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c9a84c]/30" />
+          <div className="divider-ornament mb-7">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#c9a84c]" />
-              <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">How It Works</span>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#c9a84c]" />
+              <span className="text-[#c9a84c]">✦</span>
+              <span className="display text-lg font-semibold text-[#0d3d25] tracking-wide">How It Works</span>
+              <span className="text-[#c9a84c]">✦</span>
             </div>
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c9a84c]/30" />
           </div>
 
           <div className="relative">
@@ -190,10 +198,12 @@ export default function HomePage() {
 
         {/* Source cards */}
         <div>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c9a84c]/30" />
-            <span className="text-xs font-bold text-[#1a5c38] uppercase tracking-widest">Sources</span>
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c9a84c]/30" />
+          <div className="divider-ornament mb-6">
+            <div className="flex items-center gap-2">
+              <span className="text-[#c9a84c]">✦</span>
+              <span className="display text-lg font-semibold text-[#0d3d25] tracking-wide">Our Sources</span>
+              <span className="text-[#c9a84c]">✦</span>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[

@@ -128,29 +128,30 @@ function ChatContent() {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
             {/* Icon */}
-            <div className="relative mb-6">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#0d3d25] to-[#1a5c38] flex items-center justify-center shadow-xl shadow-[#0d3d25]/30">
-                <svg viewBox="0 0 40 40" width="32" height="32" fill="none">
-                  <path d="M20 4C20 4 30 12 30 22C30 27.5 25.5 32 20 32C14.5 32 10 27.5 10 22C10 16.5 14.5 12 20 12" stroke="#c9a84c" strokeWidth="2.5" strokeLinecap="round"/>
-                  <circle cx="32" cy="8" r="3.5" fill="#c9a84c"/>
-                  <path d="M23 16 L26 13 L34 21 L26 29 L23 26 L28 21 Z" fill="#c9a84c" opacity="0.4"/>
+            <div className="relative mb-7">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#0a2e1c] to-[#1a5c38] flex items-center justify-center shadow-xl shadow-[#0d3d25]/30 float">
+                <svg viewBox="0 0 40 40" width="38" height="38" fill="none">
+                  <path d="M20 4C20 4 30 12 30 22C30 27.5 25.5 32 20 32C14.5 32 10 27.5 10 22C10 16.5 14.5 12 20 12" stroke="#f0d080" strokeWidth="2.5" strokeLinecap="round"/>
+                  <circle cx="32" cy="8" r="3.5" fill="#f0d080"/>
+                  <path d="M23 16 L26 13 L34 21 L26 29 L23 26 L28 21 Z" fill="#f0d080" opacity="0.45"/>
                 </svg>
               </div>
-              <div className="absolute inset-0 rounded-full border-2 border-[#c9a84c]/20 animate-ping" style={{ animationDuration: '3s' }} />
+              <div className="absolute inset-0 rounded-3xl border-2 border-[#c9a84c]/25 animate-ping" style={{ animationDuration: '3s' }} />
             </div>
 
-            <p className="arabic text-4xl text-[#1a5c38] mb-3 leading-loose">سبحان الله</p>
-            <p className="text-gray-700 font-semibold text-base mb-1">Got a question about Islam?</p>
-            <p className="text-gray-400 text-sm mb-2">Ask anything — in English or <span className="font-medium">اردو میں</span></p>
-            <p className="text-xs text-[#1a5c38]/60 mb-7">Answers from Quran & authentic Hadith, explained simply</p>
+            <p className="arabic text-4xl text-[#1a5c38] mb-3 leading-loose">سُبْحَانَ اللّٰه</p>
+            <h2 className="display text-2xl font-semibold text-[#0d3d25] mb-1.5">Got a question about Islam?</h2>
+            <p className="text-gray-500 text-sm mb-1">Ask anything — in English or <span className="font-medium text-[#1a5c38]">اردو میں</span></p>
+            <p className="text-xs text-[#c9a84c] font-medium mb-8">From Quran &amp; authentic Hadith, explained simply</p>
 
             {/* Quick question chips */}
-            <div className="flex flex-wrap justify-center gap-2 max-w-md">
-              {QUICK_QUESTIONS.map(q => (
+            <div className="flex flex-wrap justify-center gap-2.5 max-w-md">
+              {QUICK_QUESTIONS.map((q, i) => (
                 <button
                   key={q}
                   onClick={() => setInput(q)}
-                  className="text-xs bg-white border border-[#c9a84c]/25 text-[#1a5c38] font-medium px-4 py-2 rounded-full hover:border-[#1a5c38]/50 hover:bg-green-50 hover:-translate-y-0.5 transition-all duration-200 shadow-sm"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                  className="fade-in text-xs bg-white border border-[#c9a84c]/25 text-[#1a5c38] font-semibold px-4 py-2.5 rounded-full hover:border-[#c9a84c]/60 hover:bg-[#fdf6e3] hover:-translate-y-0.5 transition-all duration-200 shadow-soft"
                 >
                   {q}
                 </button>
